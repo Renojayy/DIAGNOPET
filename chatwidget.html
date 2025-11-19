@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Chat Widget</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- 🩵 Artemis Widget -->
+  <div id="artemis-bubble">🐾</div>
+  <div id="artemis-widget">
+    <div id="chat-header">🐾 Artemis Vet Assistant</div>
+    <div id="chat-body"></div>
+    <div id="chat-input-area">
+      <input id="chat-input" type="text" placeholder="Type your message..." />
+      <button id="chat-send">➤</button>
+    </div>
+  </div>
+
+  <script>
+    // Chat Widget
+    const bubble = document.getElementById("artemis-bubble");
+    const widget = document.getElementById("artemis-widget");
+    const chatBody = document.getElementById("chat-body");
+    const chatInput = document.getElementById("chat-input");
+    const chatSend = document.getElementById("chat-send");
+
+    bubble.onclick = () => {
+      widget.style.display = widget.style.display === "none" ? "flex" : "none";
+      if (!chatBody.innerHTML) addMessage("Hi! I'm Artemis 🐾. How can I help today?", "bot");
+    };
+
+    function addMessage(text, sender) {
+      const msg = document.createElement("div");
+      msg.className = `chat-message ${sender}`;
+      msg.textContent = text;
+      chatBody.appendChild(msg);
+      chatBody.scrollTop = chatBody.scrollHeight;
+    }
+
+    async function sendMessage(message) {
+      addMessage(message, "user");
+      chatInput.value = "";
+      addMessage("⏳ Artemis is thinking...", "bot");
+
+      // ✅ Placeholder AI logic
+      setTimeout(() => {
+        chatBody.lastChild.remove();
+        addMessage("This is a placeholder AI response. Connect your API here!", "bot");
+      }, 1200);
+    }
+
+    chatSend.onclick = () => {
+      if (chatInput.value.trim()) sendMessage(chatInput.value.trim());
+    };
+
+    chatInput.addEventListener("keypress", (e) => {
+      if (e.key === "Enter" && chatInput.value.trim()) sendMessage(chatInput.value.trim());
+    });
+  </script>
+</body>
+</html>

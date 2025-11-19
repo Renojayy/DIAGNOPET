@@ -1,0 +1,4 @@
+#072237-blue
+#353637-grey
+
+linear-gradient(to bottom, #072237, #353637);
