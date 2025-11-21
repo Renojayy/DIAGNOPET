@@ -1,16 +1,34 @@
 <?php
 session_start();
-include 'db_connect.php';
+include 'db_connect.php'; // still needed for login sessions
 
-/*
-  diagnopet_terms.php
-  PHP file that displays the Terms and Conditions for Diagnopet and allows downloading as a plain-text file.
-  Usage:
-    - Open in a browser to view the Terms: http://your-server/diagnopet_terms.php
-    - Download a .txt copy: http://your-server/diagnopet_terms.php?download=1
-*/
+// Disable caching so back button cannot return to previous pages
+header("Cache-Control: no-cache, no-store, must-revalidate");
+header("Pragma: no-cache");
+header("Expires: 0");
 
-$lastUpdated = isset($argv) ? (isset($argv[1]) ? $argv[1] : date('F j, Y')) : date('F j, Y');
+// BLOCK ACCESS if vet is NOT logged in
+if (!isset($_SESSION['vet_logged_in']) || $_SESSION['vet_logged_in'] !== true) {
+    header("Location: vetlogin.php");
+    exit();
+}
+
+// If already accepted terms → go to dashboard
+if (isset($_SESSION['terms_accepted']) && $_SESSION['terms_accepted'] === true) {
+    header("Location: dashboard_vet.php");
+    exit();
+}
+
+// Handle "Accept Terms" submission
+if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['accept_terms'])) {
+    // Store acceptance in SESSION only (no DB update)
+    $_SESSION['terms_accepted'] = true;
+    header("Location: dashboard_vet.php");
+    exit();
+}
+
+// Load terms
+$lastUpdated = date('F j, Y');
 
 $terms = <<<'TEXT'
 Terms and Conditions
@@ -99,48 +117,26 @@ For concerns, feedback, or support, you may contact the Diagnopet administrators
 diagnopet.support@gmail.com
 
 TEXT;
-
 $terms = str_replace('%LAST_UPDATED%', $lastUpdated, $terms);
-
-// If user requested a download (example: ?download=1), send as a plain text file.
-if (php_sapi_name() !== 'cli' && isset($_GET['download'])) {
-    header('Content-Type: text/plain; charset=utf-8');
-    header('Content-Disposition: attachment; filename="diagnopet_terms.txt"');
-    echo $terms;
-    exit;
-}
-
-// Handle form submission
-if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['accept_terms'])) {
-    session_start();
-    if (isset($_SESSION['vet_id'])) {
-        $vet_id = $_SESSION['vet_id'];
-        $stmt = $conn->prepare("UPDATE veterinarian SET terms_accepted = 1 WHERE id = ?");
-        $stmt->bind_param("i", $vet_id);
-        $stmt->execute();
-        $stmt->close();
-        header("Location: dashboard_vet.php");
-        exit();
-    }
-}
-
-// HTML output
-?><!doctype html>
+?>
+<!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
   <title>Diagnopet — Terms and Conditions</title>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
     body { font-family: 'Poppins', sans-serif; margin: 0; background: #f9fbff; color: #333; line-height: 1.6; padding: 32px; }
-    .container { max-width: 900px; margin: 0 auto; background: #fff; border-radius: 15px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08); padding: 20px; }
-    h1 { font-size: 24px; color: #0073e6; }
+    .container { max-width: 900px; margin: 0 auto; background: #fff; border-radius: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); padding: 20px; }
+    h1 { font-size: 24px; color: #0073e6; margin-bottom: 10px; }
     pre { white-space: pre-wrap; word-wrap: break-word; background: #e3f2fd; padding: 18px; border-radius: 8px; }
     .actions { margin: 12px 0; }
-    .btn { display: inline-block; padding: 8px 12px; border-radius: 6px; text-decoration: none; background: #0073e6; color: white; border: none; transition: background-color 0.3s; margin-right: 10px; }
+    .btn { display: inline-block; padding: 8px 12px; border-radius: 6px; text-decoration: none; background: #0073e6; color: white; border: none; transition: background-color 0.3s; margin-top: 10px; }
     .btn:hover { background: #005bb5; }
-
   </style>
 </head>
 <body>
@@ -148,7 +144,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['accept_terms'])) {
     <h1>Diagnopet — Terms and Conditions</h1>
     <p><strong>Last Updated:</strong> <?php echo htmlspecialchars($lastUpdated); ?></p>
     <pre><?php echo htmlspecialchars($terms); ?></pre>
-    <form action="dashboard_vet.php" method="POST">
+
+    <form action="" method="POST">
       <div class="actions">
         <label>
           <input type="checkbox" name="accept_terms" required> I accept the Terms and Conditions

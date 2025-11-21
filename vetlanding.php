@@ -9,22 +9,19 @@
   <style>
     body {
       margin: 0;
-      font-family: 'Poppins', Georgia;
-      background: #fff;
-      color: #003366;
-      overflow-x: hidden;
+      font-family: 'Poppins', sans-serif;
+      background: #ffffff;
+      color: #333;
+      line-height: 1.6;
     }
 
     .container {
       max-width: 1200px;
       margin: 0 auto;
-      padding: 40px 20px;
+      padding: 60px 20px;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      background: #fff;
-      border-radius: 20px;
-      box-shadow: 0 10px 40px rgba(0,0,0,0.08);
     }
 
     .left {
@@ -32,59 +29,29 @@
     }
 
     .left h1 {
-      font-size: 42px;
+      font-size: 48px;
       font-weight: 700;
       margin-bottom: 20px;
+      color: #007bff;
     }
 
     .left p {
-      color: #336699;
-      margin-bottom: 30px;
-      line-height: 1.6;
+      color: #666;
+      margin-bottom: 40px;
+      font-size: 18px;
     }
 
     .login-btn {
-      padding: 12px 30px;
-      background: #fff;
-      color: #007bff;
-      border-radius: 30px;
-      font-weight: 600;
-      border: 2px solid #007bff;
-      cursor: pointer;
-      font-size: 16px;
-    }
-
-    .login-btn a {
-      text-decoration: none;
-      color: #007bff;
-    }
-
-    .search-box {
-      margin-top: 20px;
-      display: flex;
-      background: #f3f3f3;
-      border-radius: 40px;
-      padding: 10px;
-      align-items: center;
-      width: 90%;
-    }
-
-    .search-box input {
-      flex: 1;
-      border: none;
-      background: transparent;
-      font-size: 16px;
-      outline: none;
-      padding: 5px;
-    }
-
-    .search-box button {
+      padding: 15px 40px;
       background: #007bff;
-      border: none;
       color: #fff;
-      padding: 10px 20px;
-      border-radius: 30px;
+      border-radius: 50px;
+      font-weight: 600;
+      border: none;
       cursor: pointer;
+      font-size: 18px;
+      text-decoration: none;
+      display: inline-block;
     }
 
     .right {
@@ -95,34 +62,17 @@
     }
 
     .image-holder {
-      width: 90%;
-      height: 450px;
-      background: #eee;
+      width: 100%;
+      height: 500px;
       border-radius: 20px;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      color: #888;
-      font-size: 18px;
-      font-weight: 600;
-      border: 2px dashed #ccc;
+      overflow: hidden;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
     }
 
-  
-
-    /* --- Floating Bubbles --- */
-    .bubble {
-      position: absolute;
-      border-radius: 50%;
-      background: rgba(0, 123, 255, 0.15);
-      animation: float 8s infinite ease-in-out;
-      z-index: 0;
-    }
-
-    @keyframes float {
-      0% { transform: translateY(0) scale(1); }
-      50% { transform: translateY(-20px) scale(1.1); }
-      100% { transform: translateY(0) scale(1); }
+    .image-holder img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
     }
 
     /* Responsive Design */
@@ -130,7 +80,7 @@
       .container {
         flex-direction: column;
         text-align: center;
-        padding: 30px 20px;
+        padding: 40px 20px;
       }
 
       .left, .right {
@@ -138,34 +88,23 @@
       }
 
       .left h1 {
-        font-size: 32px;
+        font-size: 36px;
       }
 
-      .search-box {
-        width: 100%;
-        justify-content: center;
+      .left p {
+        font-size: 16px;
       }
 
       .image-holder {
         width: 100%;
-        height: 300px;
-        margin-top: 20px;
+        height: 350px;
+        margin-top: 40px;
       }
     }
 
     @media (max-width: 500px) {
-      header {
-        flex-direction: column !important;
-        text-align: center;
-      }
-
-      nav a {
-        display: inline-block;
-        margin: 8px 10px !important;
-      }
-
       .left h1 {
-        font-size: 26px;
+        font-size: 28px;
       }
 
       .left p {
@@ -174,23 +113,17 @@
 
       .login-btn {
         width: 100%;
-      }
-
-      .search-box input {
-        font-size: 14px;
+        padding: 12px 20px;
       }
     }
 
   </style>
 </head>
 <body>
-  <div class="bubble" style="width:120px;height:120px;top:20%;left:15%;animation-delay:0s;"></div>
-  <div class="bubble" style="width:80px;height:80px;top:60%;left:70%;animation-delay:2s;"></div>
-  <div class="bubble" style="width:100px;height:100px;top:40%;left:40%;animation-delay:4s;"></div>
-  <div class="bubble" style="width:60px;height:60px;top:80%;left:25%;animation-delay:1s;"></div>
+
 
   <header style="padding: 20px 40px; display: flex; justify-content: space-between; align-items: center;">
-    <h2 style="margin: 0; font-weight: 700;">DIAGNOPET</h2>
+    <h2 style="margin: 0; font-weight: 700; color: #007bff;">DIAGNOPET</h2>
     <nav>
       <a href="index.php" style="margin-right: 20px; color: #333; text-decoration: none;">Home</a>
       <a href="vet-login.php" style="padding: 10px 20px; border: 2px solid #007bff; border-radius: 30px; text-decoration: none; color:#007bff; font-weight:600;">Login</a>
@@ -201,16 +134,12 @@
     <div class="left">
       <h1>Caring for Pets Starts With You</h1>
       <p>Log in to manage veterinary appointments, pet records, and provide the best care for your furry patients.</p>
-      <button class="login-btn"><a href="vet-register.php">Sign up </a> </button> 
-
-      <div class="search-box">
-       
-      </div>
+      <a href="vet-register.php" class="login-btn">Sign up</a>
     </div>
 
     <div class="right">
       <div class="image-holder">
-        Insert Pet Image Here
+        <img src="DC icons/veterinarian.jpg" alt="Veterinarian caring for pets">
       </div>
     </div>
   </div>

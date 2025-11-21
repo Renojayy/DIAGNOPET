@@ -84,7 +84,7 @@ $conn->close();
     color: #333;
   }
   .widget {
-    width: 250px;
+    width: 255px;
     background: white;
     padding: 0;
     box-shadow: 0 2px 10px rgba(0,0,0,0.1);
@@ -263,7 +263,7 @@ $conn->close();
     </ul>
 
     <div class="widget">
-      <h4> Find Vet Clinics Near You!</h4>
+      <h4> Find Vet Clinics Places Near You!</h4>
       <div id="clinicMap"></div>
     </div>
   </div>
