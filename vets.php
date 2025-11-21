@@ -1,9 +1,35 @@
+<?php
+session_start();
+include 'db_connect.php';
+
+if (!isset($_SESSION['user_name'])) {
+    header("Location: login.php");
+    exit();
+}
+
+$user_name = $_SESSION['user_name'];
+
+// Fetch vets from database
+$vets = [];
+$sql = "SELECT id, name, email, specialization, clinic_name, location FROM veterinarian";
+$result = $conn->query($sql);
+if ($result->num_rows > 0) {
+    while ($row = $result->fetch_assoc()) {
+        $vets[] = $row;
+    }
+}
+
+$conn->close();
+?>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Vet Profiles</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <style>
   body {
     margin: 0;
@@ -23,7 +49,7 @@
   .header h1 {
     font-size: 24px;
     font-weight: 600;
-    color: #333;
+    color: #007bff;
   }
   .back-btn {
     background: #007bff;
@@ -33,14 +59,58 @@
     border-radius: 5px;
     cursor: pointer;
     font-size: 16px;
+    text-decoration: none;
+    display: inline-block;
   }
   .main-content {
     display: flex;
-    padding: 0 20px;
+    padding: 0 20px 0 20px;
     gap: 20px;
   }
+  .map-widget {
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto 20px auto;
+    background: white;
+    padding: 20px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    border: 1px solid #ddd;
+    border-radius: 10px;
+  }
+  .map-widget h3 {
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: 15px;
+    color: #333;
+  }
+  .widget {
+    width: 250px;
+    background: white;
+    padding: 0;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    border: 1px solid #ddd;
+    border-radius: 10px;
+    margin-bottom: 20px;
+  }
+  .widget h3 {
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: 15px;
+    color: #333;
+  }
+  .map-placeholder {
+    width: 100%;
+    height: 200px;
+    background: #e0e0e0;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #666;
+    font-size: 16px;
+  }
   .sidebar {
-    width: 200px;
+    width: 250px;
     background: white;
     padding: 20px;
     box-shadow: 0 2px 10px rgba(0,0,0,0.1);
@@ -55,6 +125,25 @@
   .sidebar li { margin-bottom: 10px; }
   .sidebar a { text-decoration: none; color: #333; font-size: 16px; }
   .sidebar a:hover { color: #007bff; }
+
+  #clinicMap {
+    width: 100%;
+    height: 170px;
+    border-radius: 10px;
+    margin-top: -14px;
+    animation: fadeInMap 2s ease-in-out;
+  }
+
+  @keyframes fadeInMap {
+    from {
+      opacity: 0;
+      transform: scale(0.9);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
 
   .container {
     display: flex;
@@ -137,13 +226,22 @@
     gap: 6px;
   }
 
+  .no-vets {
+    text-align: center;
+    color: #666;
+    font-size: 18px;
+    padding: 40px;
+  }
+
   /* Responsive */
   @media(max-width: 900px) {
     .main-content { flex-direction: column; align-items: center; }
     .sidebar { width: 90%; }
+    .map-widget { width: 90%; }
   }
   @media(max-width: 768px) {
     .card { width: 90%; }
+    .map-widget { width: 95%; }
   }
 </style>
 </head>
@@ -151,7 +249,7 @@
 
 <div class="header">
   <h1>Veterinarians in Diagnopet</h1>
-  <button class="back-btn" onclick="window.history.back()">Back</button>
+  <a href="petowner_dashboard.php" class="back-btn">Back</a>
 </div>
 
 <div class="main-content">
@@ -163,41 +261,121 @@
       <li><a href="#">Favorites</a></li>
       <li><a href="#">Newest</a></li>
     </ul>
+
+    <div class="widget">
+      <h4> Find Vet Clinics Near You!</h4>
+      <div id="clinicMap"></div>
+    </div>
   </div>
 
   <div class="container">
-    <?php
-      $vets = [
-        ["name" => "Dr. Maria Santos", "img" => "https://via.placeholder.com/600x600", "specialization" => "Small Animals / Surgery", "active" => true, "hours" => "9:00 AM - 6:00 PM", "clients" => 512, "rating" => 4.8],
-        ["name" => "Dr. Paulo Ramirez", "img" => "https://via.placeholder.com/600x600", "specialization" => "Exotic Pets / Dental Care", "active" => false, "hours" => "10:00 AM - 5:00 PM", "clients" => 304, "rating" => 4.2],
-        ["name" => "Dr. Hannah Villareal", "img" => "https://via.placeholder.com/600x600", "specialization" => "Farm Animals / Vaccination", "active" => true, "hours" => "7:00 AM - 3:00 PM", "clients" => 428, "rating" => 4.9],
-      ];
-
-      foreach ($vets as $vet) {
-        echo "
+    <?php if (empty($vets)): ?>
+      <div class="no-vets">
+        No vets yet
+      </div>
+    <?php else: ?>
+      <?php foreach ($vets as $vet): ?>
         <div class='card'>
-          <img src='https://img.icons8.com/ios-filled/96/000000/user.png' alt='User Silhouette' class='placeholder-icon'>
+          <div class='placeholder-icon'>👨‍⚕️</div>
           <div class='content'>
-            <div class='name'>{$vet['name']}" . ($vet['active'] ? " <span class='green-dot'></span>" : "") . "</div>
-            <div class='rating'>" . str_repeat("⭐", floor($vet['rating'])) . " {$vet['rating']}</div>
-            <div class='subtext'>Specialization: {$vet['specialization']}</div>
-            <div class='subtext'>Availability: {$vet['hours']}</div>
+            <div class='name'><?php echo htmlspecialchars($vet['name']); ?></div>
+            <div class='subtext'>Specialization: <?php echo htmlspecialchars($vet['specialization']); ?></div>
+            <div class='subtext'>Clinic: <?php echo htmlspecialchars($vet['clinic_name']); ?></div>
+            <div class='subtext'>Location: <?php echo htmlspecialchars($vet['location']); ?></div>
           </div>
           <div class='stats'>
-            <div class='small'>👥 {$vet['clients']}</div>
-            <button class='btn' onclick=\"messageVet('{$vet['name']}')\">Message Now ✉️</button>
+            <div class='small'>📧 <?php echo htmlspecialchars($vet['email']); ?></div>
+            <button class='btn' onclick="messageVet('<?php echo htmlspecialchars($vet['name']); ?>')">Contact ✉️</button>
           </div>
         </div>
-        ";
-      }
-    ?>
+      <?php endforeach; ?>
+    <?php endif; ?>
   </div>
 </div>
 
 <script>
 function messageVet(name) {
-  alert('Messaging ' + name + ' now!');
+  alert('Contacting ' + name + ' now!');
 }
+
+// ---- Sample Veterinary Clinics (replace with database/API) ----
+const vetClinics = [
+  { name: "Happy Paws Veterinary Clinic", lat: 14.5995, lng: 120.9842 },
+  { name: "PetZone Animal Hospital", lat: 14.6102, lng: 121.0087 },
+  { name: "VetCare Specialists", lat: 14.5853, lng: 121.0567 },
+  { name: "Animal Wellness Clinic", lat: 14.6042, lng: 121.0330 }
+];
+
+// ---- Initialize Map ----
+const map = L.map("clinicMap").setView([14.5995, 120.9842], 13);
+
+// ---- Add Map Tiles ----
+L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+  maxZoom: 19,
+  attribution: "© OpenStreetMap contributors"
+}).addTo(map);
+
+// ---- User Location Detection ----
+function detectLocation() {
+  if (!navigator.geolocation) {
+    document.getElementById("locationStatus").innerText =
+      "Geolocation is not supported by your browser.";
+    return;
+  }
+
+  navigator.geolocation.getCurrentPosition(
+    position => {
+      const userLat = position.coords.latitude;
+      const userLng = position.coords.longitude;
+
+      document.getElementById("locationStatus").innerText =
+        "Your location detected. Showing nearby clinics.";
+
+      // Place user location marker
+      L.marker([userLat, userLng], { title: "You Are Here" })
+        .addTo(map)
+        .bindPopup("<b>You are here</b>")
+        .openPopup();
+
+      map.setView([userLat, userLng], 15);
+
+      // Compute distance and show nearby clinics
+      vetClinics.forEach(clinic => {
+        const distance = calcDistance(userLat, userLng, clinic.lat, clinic.lng);
+
+        // Only show clinics within 10 km
+        if (distance <= 10) {
+          L.marker([clinic.lat, clinic.lng])
+            .addTo(map)
+            .bindPopup(`<b>${clinic.name}</b><br>${distance.toFixed(2)} km away`);
+        }
+      });
+    },
+
+    error => {
+      document.getElementById("locationStatus").innerText =
+        "Unable to retrieve your location.";
+    }
+  );
+}
+
+// ---- Haversine Formula for Distance ----
+function calcDistance(lat1, lon1, lat2, lon2) {
+  const R = 6371; // km
+  const dLat = (lat2 - lat1) * (Math.PI / 180);
+  const dLon = (lon2 - lon1) * (Math.PI / 180);
+
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(lat1 * (Math.PI / 180)) *
+      Math.cos(lat2 * (Math.PI / 180)) *
+      Math.sin(dLon / 2) ** 2;
+
+  return R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)));
+}
+
+// ---- Start the widget ----
+detectLocation();
 </script>
 </body>
 </html>
