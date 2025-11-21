@@ -1,6 +1,6 @@
-# TODO: Update Vet Registration Form and Database Connectivity
+# TODO for Adjusting Map Layout in vets.php
 
-## Steps to Complete:
-- [x] Update vet-register.php form HTML to include new fields: Name, Specialization, License Number, Verify/Non Verify (radio buttons), Password, Email, Location, Clinic Name.
-- [x] Add PHP backend code to vet-register.php for form submission: connect to database, validate inputs, hash password, insert data into 'vets' table, and redirect to vet-login.php on success.
-- [x] Test the registration form to ensure data inserts correctly and redirection works.
+- [x] Move the map widget (.widget) from the sidebar to the main-content area, placing it above the .container (vet cards).
+- [x] Update CSS for .main-content to use flex-direction: column; with the map at the top, and below it a flex row containing the sidebar and .container.
+- [x] Adjust sidebar width and ensure responsive design (stack vertically on mobile).
+- [x] Test the layout in a browser to verify map functionality and responsiveness.

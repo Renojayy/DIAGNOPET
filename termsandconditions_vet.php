@@ -1,4 +1,7 @@
 <?php
+session_start();
+include 'db_connect.php';
+
 /*
   diagnopet_terms.php
   PHP file that displays the Terms and Conditions for Diagnopet and allows downloading as a plain-text file.
@@ -107,6 +110,20 @@ if (php_sapi_name() !== 'cli' && isset($_GET['download'])) {
     exit;
 }
 
+// Handle form submission
+if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['accept_terms'])) {
+    session_start();
+    if (isset($_SESSION['vet_id'])) {
+        $vet_id = $_SESSION['vet_id'];
+        $stmt = $conn->prepare("UPDATE veterinarian SET terms_accepted = 1 WHERE id = ?");
+        $stmt->bind_param("i", $vet_id);
+        $stmt->execute();
+        $stmt->close();
+        header("Location: dashboard_vet.php");
+        exit();
+    }
+}
+
 // HTML output
 ?><!doctype html>
 <html lang="en">
@@ -115,23 +132,31 @@ if (php_sapi_name() !== 'cli' && isset($_GET['download'])) {
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Diagnopet — Terms and Conditions</title>
   <style>
-    body { font-family: Arial, Helvetica, sans-serif; line-height: 1.6; margin: 32px; color: #111; }
-    .container { max-width: 900px; margin: 0 auto; }
-    h1 { font-size: 24px; }
-    pre { white-space: pre-wrap; word-wrap: break-word; background: #f8f8f8; padding: 18px; border-radius: 8px; }
+    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+    body { font-family: 'Poppins', sans-serif; margin: 0; background: #f9fbff; color: #333; line-height: 1.6; padding: 32px; }
+    .container { max-width: 900px; margin: 0 auto; background: #fff; border-radius: 15px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08); padding: 20px; }
+    h1 { font-size: 24px; color: #0073e6; }
+    pre { white-space: pre-wrap; word-wrap: break-word; background: #e3f2fd; padding: 18px; border-radius: 8px; }
     .actions { margin: 12px 0; }
-    .btn { display: inline-block; padding: 8px 12px; border-radius: 6px; text-decoration: none; border: 1px solid #ccc; }
+    .btn { display: inline-block; padding: 8px 12px; border-radius: 6px; text-decoration: none; background: #0073e6; color: white; border: none; transition: background-color 0.3s; margin-right: 10px; }
+    .btn:hover { background: #005bb5; }
+
   </style>
 </head>
 <body>
   <div class="container">
     <h1>Diagnopet — Terms and Conditions</h1>
     <p><strong>Last Updated:</strong> <?php echo htmlspecialchars($lastUpdated); ?></p>
-    <div class="actions">
-      <a class="btn" href="?download=1">Download as .txt</a>
-    </div>
     <pre><?php echo htmlspecialchars($terms); ?></pre>
-    <p>If you'd like this exported as a Word (.docx) or PDF file, tell me and I will provide a ready-to-download file version.</p>
+    <form action="dashboard_vet.php" method="POST">
+      <div class="actions">
+        <label>
+          <input type="checkbox" name="accept_terms" required> I accept the Terms and Conditions
+        </label>
+        <br>
+        <button type="submit" class="btn">Continue</button>
+      </div>
+    </form>
   </div>
 </body>
 </html>

@@ -1,16 +1,4 @@
 <?php
-/*
-  diagnopet_dashboard.php
-  A single-file PHP + HTML dashboard mockup styled with Bootstrap and custom CSS.
-
-  How to use:
-  1. Place this file in your web server (e.g., XAMPP htdocs/Diagnopet/).
-  2. Open in browser: http://localhost/Diagnopet/diagnopet_dashboard.php
-
-  This is a template/mock -- replace sample data with real database queries
-  or API calls as needed.
-*/
-
 // --- Sample dynamic data (replace with DB queries) ---
 $metrics = [
     'upcoming' => 120,
@@ -37,7 +25,6 @@ $timeline = [
     ['time' => '13:00', 'title' => 'Vaccination', 'meta' => 'Clinic - Nurse Ana'],
     ['time' => '15:30', 'title' => 'Consultation', 'meta' => 'Room 2 - Dr. Lim'],
 ];
-
 ?>
 
 <!doctype html>
@@ -80,8 +67,8 @@ $timeline = [
       </div>
       <nav class="nav flex-column mt-3">
         <a class="nav-link active" href="#"><i class="fas fa-home me-2"></i> Dashboard</a>
-        <a class="nav-link" href="#"><i class="fas fa-stethoscope me-2"></i> Appointments</a>
-        <a class="nav-link" href="#"><i class="fas fa-paw me-2"></i> Patients</a>
+        <a class="nav-link" href="#appointments"><i class="fas fa-stethoscope me-2"></i> Appointments</a>
+        <a class="nav-link" href="#patients"><i class="fas fa-paw me-2"></i> Patients</a>
         <a class="nav-link" href="#"><i class="fas fa-file-invoice-dollar me-2"></i> Billing</a>
         <a class="nav-link" href="#"><i class="fas fa-cog me-2"></i> Settings</a>
       </nav>
@@ -183,8 +170,98 @@ $timeline = [
         </div>
         <div class="col-12 col-md-6">
           <div class="card p-3">
-            <h6>Notifications</h6>
-            <div class="small text-muted">No new notifications</div>
+            <h6>Chat Messages</h6>
+            <div class="small text-muted">No new messages</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- APPOINTMENTS SECTION -->
+      <div id="appointments" class="row g-3 mt-3">
+        <div class="col-12">
+          <div class="card p-3">
+            <h6>Appointments and Consultations</h6>
+            <table class="table table-striped">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Pet Owner</th>
+                  <th>Vet ID</th>
+                  <th>Date</th>
+                  <th>Symptoms</th>
+                  <th>Remarks</th>
+                  <th>Threat Level</th>
+                </tr>
+              </thead>
+              <tbody>
+                <?php
+                include 'db_connect.php';
+                $sql = "SELECT * FROM consultations";
+                $result = $conn->query($sql);
+                if ($result->num_rows > 0) {
+                  while($row = $result->fetch_assoc()) {
+                    echo "<tr>";
+                    echo "<td>" . htmlspecialchars($row["consultation_id"]) . "</td>";
+                    echo "<td>" . htmlspecialchars($row["Pet Owner"]) . "</td>";
+                    echo "<td>" . htmlspecialchars($row["Veterinary ID"]) . "</td>";
+                    echo "<td>" . htmlspecialchars($row["Consultations Date"]) . "</td>";
+                    echo "<td>" . htmlspecialchars($row["Symptoms Discussed"]) . "</td>";
+                    echo "<td>" . htmlspecialchars($row["Remarks"]) . "</td>";
+                    echo "<td>" . htmlspecialchars($row["Level of Threats"]) . "</td>";
+                    echo "</tr>";
+                  }
+                } else {
+                  echo "<tr><td colspan='7'>No consultations found</td></tr>";
+                }
+                $conn->close();
+                ?>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- PATIENTS SECTION -->
+      <div id="patients" class="row g-3 mt-3">
+        <div class="col-12">
+          <div class="card p-3">
+            <h6>Patients</h6>
+            <table class="table table-striped">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Pet Name</th>
+                  <th>Species</th>
+                  <th>Breed</th>
+                  <th>Age</th>
+                  <th>Owner</th>
+                  <th>Gender</th>
+                </tr>
+              </thead>
+              <tbody>
+                <?php
+                include 'db_connect.php';
+                $sql = "SELECT * FROM pets";
+                $result = $conn->query($sql);
+                if ($result->num_rows > 0) {
+                  while($row = $result->fetch_assoc()) {
+                    echo "<tr>";
+                    echo "<td>" . htmlspecialchars($row["pet_id"]) . "</td>";
+                    echo "<td>" . htmlspecialchars($row["Pet Name"]) . "</td>";
+                    echo "<td>" . htmlspecialchars($row["Pet Type"]) . "</td>";
+                    echo "<td>" . htmlspecialchars($row["Pet Breed"]) . "</td>";
+                    echo "<td>" . htmlspecialchars($row["Pet Age"]) . "</td>";
+                    echo "<td>" . htmlspecialchars($row["user_name"]) . "</td>";
+                    echo "<td>" . htmlspecialchars($row["Pet Gender"]) . "</td>";
+                    echo "</tr>";
+                  }
+                } else {
+                  echo "<tr><td colspan='7'>No patients found</td></tr>";
+                }
+                $conn->close();
+                ?>
+              </tbody>
+            </table>
           </div>
         </div>
       </div>
@@ -195,9 +272,9 @@ $timeline = [
     <aside class="col-12 col-lg-2 p-4">
       <div class="d-flex justify-content-between align-items-center mb-3">
         <div>
-          <small class="text-muted">Today, 12 Dec.</small>
+          <small class="text-muted">Today, <?php echo date('d M.'); ?></small>
         </div>
-        <button class="btn btn-sm btn-primary">New</button>
+        <a href="logout.php" class="btn btn-sm btn-danger">Logout</a>
       </div>
 
       <div class="timeline">

@@ -108,6 +108,34 @@ $meds = [];
 
 $events = [];
 
+// Load dog and cat breeds
+$dog_breeds = [];
+$cat_breeds = [];
+$breed_file = 'dog breeds and cat breeds.txt';
+if (file_exists($breed_file)) {
+    $content = file_get_contents($breed_file);
+    $lines = explode("\n", $content);
+    $current_section = '';
+    foreach ($lines as $line) {
+        $line = trim($line);
+        if (strpos($line, 'dogs:') === 0) {
+            $current_section = 'dogs';
+        } elseif (strpos($line, 'cats:') === 0) {
+            $current_section = 'cats';
+        } elseif (!empty($line) && $current_section == 'dogs') {
+            $breeds = explode(',', $line);
+            foreach ($breeds as $breed) {
+                $dog_breeds[] = trim($breed, '"');
+            }
+        } elseif (!empty($line) && $current_section == 'cats') {
+            $breeds = explode(',', $line);
+            foreach ($breeds as $breed) {
+                $cat_breeds[] = trim($breed, '"');
+            }
+        }
+    }
+}
+
 ?>
 
 <!doctype html>
@@ -311,7 +339,16 @@ $events = [];
                   <?php if (!empty($pet['avatar'])): ?>
                     <img src="<?php echo htmlspecialchars($pet['avatar']); ?>" alt="Pet Avatar" style="width:100%;height:100%;object-fit:cover;border-radius:14px;">
                   <?php else: ?>
-                    <?php echo htmlspecialchars(substr($pet['name'], 0, 1)); ?>
+                    <?php
+                    $breed = $pet['breed'];
+                    if (in_array($breed, $dog_breeds)) {
+                        echo '<img src="DC icons/dog_12353611.png" alt="Dog Icon" style="width:100%;height:100%;object-fit:cover;border-radius:14px;">';
+                    } elseif (in_array($breed, $cat_breeds)) {
+                        echo '<img src="DC icons/tiger_414697.png" alt="Cat Icon" style="width:100%;height:100%;object-fit:cover;border-radius:14px;">';
+                    } else {
+                        echo htmlspecialchars(substr($pet['name'], 0, 1));
+                    }
+                    ?>
                   <?php endif; ?>
                 </div>
                 <div class="pet-meta">
@@ -465,7 +502,7 @@ $events = [];
           // Already on pets dashboard
           break;
         case 'Vets':
-          window.location.href = 'vetdashboard.php';
+          window.location.href = 'vets.php';
           break;
         case 'Profile':
           alert('Profile section - Functionality to be implemented.');
@@ -480,7 +517,7 @@ $events = [];
     }
 
     function goBack() {
-      window.history.back();
+      window.location.href = 'role-select.php';
     }
 
     function confirmDeletePet(petId) {

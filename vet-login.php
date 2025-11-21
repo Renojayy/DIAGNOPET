@@ -1,3 +1,46 @@
+<?php
+session_start();
+include 'db_connect.php';
+
+// Handle form submission
+if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+    $email = trim($_POST['email']);
+    $password = $_POST['password'];
+
+    // Basic validation
+    if (empty($email) || empty($password)) {
+        $error = "Email and password are required.";
+    } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        $error = "Invalid email format.";
+    } else {
+        // Query the database for the vet
+        $stmt = $conn->prepare("SELECT id, name, password FROM veterinarian WHERE email = ?");
+        $stmt->bind_param("s", $email);
+        $stmt->execute();
+        $stmt->store_result();
+        $stmt->bind_result($id, $name, $hashed_password);
+
+        if ($stmt->num_rows > 0) {
+            $stmt->fetch();
+            if (password_verify($password, $hashed_password)) {
+                // Successful login
+                $_SESSION['vet_id'] = $id;
+                $_SESSION['vet_name'] = $name;
+                $_SESSION['vet_email'] = $email;
+                header("Location: termsandconditions_vet.php");
+                exit();
+            } else {
+                $error = "Invalid password.";
+            }
+        } else {
+            $error = "No account found with that email.";
+        }
+        $stmt->close();
+    }
+}
+$conn->close();
+?>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -37,9 +80,10 @@
       </div>
       <h2 class="text-3xl font-bold text-gray-800 mb-2">Vet Login</h2>
       <p class="text-gray-600">Welcome back to Diagnopet</p>
+      <?php if (isset($error)) echo "<p class='text-red-500'>$error</p>"; ?>
     </div>
 
-    <form id="vetForm" action="vet-login.php" method="POST" class="space-y-4">
+    <form id="vetForm" action="" method="POST" class="space-y-4">
       <div class="relative">
         <i data-feather="mail" class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
         <input type="email" name="email" id="email" placeholder="Email Address" required

@@ -1,31 +1,31 @@
 dogs:
 
-"Aspin / Askal", "Labrador Retriever", "Golden Retriever", "Shih Tzu",
-      "Pomeranian", "Poodle", "Chihuahua", "Pug", "Siberian Husky",
-      "German Shepherd", "Beagle", "Dachshund", "French Bulldog",
-      "Maltese", "Boxer", "Rottweiler", "Cocker Spaniel",
-      "Yorkshire Terrier", "Shiba Inu", "Border Collie",
-      "Australian Shepherd", "Jack Russell Terrier", "Doberman Pinscher",
-      "Great Dane", "Corgi", "Miniature Pinscher", "Bichon Frise",
-      "Bull Terrier", "Cavalier King Charles Spaniel", "Belgian Malinois",
-      "Chow Chow", "Alaskan Malamute", "Basenji", "Cane Corso",
-      "English Springer Spaniel", "Irish Setter", "Havanese", "Shar Pei",
-      "Lhasa Apso", "American Bully", "Pit Bull Terrier", "Bullmastiff",
-      "Samoyed", "Tibetan Terrier", "American Eskimo Dog",
-      "Old English Sheepdog", "Dalmatian", "Whippet", "Greyhound", "Akita"
+Aspin / Askal, Labrador Retriever, Golden Retriever, Shih Tzu,
+Pomeranian, Poodle, Chihuahua, Pug, Siberian Husky,
+German Shepherd, Beagle, Dachshund, French Bulldog,
+Maltese, Boxer, Rottweiler, Cocker Spaniel,
+Yorkshire Terrier, Shiba Inu, Border Collie,
+Australian Shepherd, Jack Russell Terrier, Doberman Pinscher,
+Great Dane, Corgi, Miniature Pinscher, Bichon Frise,
+Bull Terrier, Cavalier King Charles Spaniel, Belgian Malinois,
+Chow Chow, Alaskan Malamute, Basenji, Cane Corso,
+English Springer Spaniel, Irish Setter, Havanese, Shar Pei,
+Lhasa Apso, American Bully, Pit Bull Terrier, Bullmastiff,
+Samoyed, Tibetan Terrier, American Eskimo Dog,
+Old English Sheepdog, Dalmatian, Whippet, Greyhound, Akita
 
 
 cats:
 
-"Puspin", "Domestic Shorthair", "Persian", "Siamese", "Maine Coon",
-      "Ragdoll", "Bengal", "British Shorthair", "Scottish Fold",
-      "Sphynx", "Norwegian Forest", "Russian Blue", "Exotic Shorthair",
-      "Burmese", "Himalayan", "Abyssinian", "Oriental Shorthair",
-      "Turkish Angora", "Tonkinese", "Birman", "Savannah", "Cornish Rex",
-      "Devon Rex", "Egyptian Mau", "Manx", "Ragamuffin", "Chartreux",
-      "Balinese", "Japanese Bobtail", "American Shorthair",
-      "Australian Mist", "LaPerm", "Singapura", "Selkirk Rex",
-      "Siberian", "Ocicat", "Serengeti", "Pixiebob", "Khao Manee",
-      "Korat", "Lykoi", "Peterbald", "Chausie", "Turkish Van",
-      "American Bobtail", "Brazilian Shorthair", "California Spangled",
-      "Oriental Longhair", "Cymric", "Burmilla"
+Puspin, Domestic Shorthair, Persian, Siamese, Maine Coon,
+Ragdoll, Bengal, British Shorthair, Scottish Fold,
+Sphynx, Norwegian Forest, Russian Blue, Exotic Shorthair,
+Burmese, Himalayan, Abyssinian, Oriental Shorthair,
+Turkish Angora, Tonkinese, Birman, Savannah, Cornish Rex,
+Devon Rex, Egyptian Mau, Manx, Ragamuffin, Chartreux,
+Balinese, Japanese Bobtail, American Shorthair,
+Australian Mist, LaPerm, Singapura, Selkirk Rex,
+Siberian, Ocicat, Serengeti, Pixiebob, Khao Manee,
+Korat, Lykoi, Peterbald, Chausie, Turkish Van,
+American Bobtail, Brazilian Shorthair, California Spangled,
+Oriental Longhair, Cymric, Burmilla

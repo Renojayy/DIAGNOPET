@@ -104,6 +104,51 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             border-radius:10px;
             border:1px solid #ddd;
         }
+        .searchable-select {
+            position: relative;
+        }
+        .searchable-select input {
+            cursor: pointer;
+            padding-right: 30px; /* Space for arrow */
+        }
+        .searchable-select::after {
+            content: '▼';
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            pointer-events: none;
+            color: #666;
+        }
+        .dropdown-list {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            width: 100%;
+            box-sizing: border-box;
+            background: #fff;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            max-height: 200px;
+            overflow-y: auto;
+            z-index: 1000;
+            display: none;
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        .dropdown-list li {
+            padding: 10px;
+            cursor: pointer;
+            border-bottom: 1px solid #eee;
+        }
+        .dropdown-list li:hover {
+            background: #f0f0f0;
+        }
+        .dropdown-list li:last-child {
+            border-bottom: none;
+        }
         .btn{
             margin-top:20px;
             width:100%;
@@ -172,9 +217,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         <input type="number" step="0.1" name="weight" placeholder="e.g. 5.3" required>
 
         <label>Breed</label>
-        <select name="breed" id="breedSelect" required>
-            <option value="">Select type first...</option>
-        </select>
+        <div class="searchable-select" id="breedContainer">
+            <input type="text" id="breedSearch" placeholder="Search and select breed..." autocomplete="off">
+            <input type="hidden" name="breed" id="breedSelect" required>
+            <ul id="breedList" class="dropdown-list"></ul>
+        </div>
 
         <label>Symptoms</label>
         <select name="symptoms[]" multiple size="10" style="height: 200px;">
@@ -301,46 +348,78 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     </form>
 
     <div class="back">
-        <a href="pet_dashboard.php">← Back to Dashboard</a>
+        <a href="petowner_dashboard.php">← Back to Dashboard</a>
     </div>
 
 </div>
 
 <script>
     const dogBreeds = [
-        "Labrador", "German Shepherd", "Pomeranian", "Shih Tzu", "Golden Retriever",
-        "Bulldog", "Beagle", "Husky"
+        "Aspin / Askal", "Labrador Retriever", "Golden Retriever", "Shih Tzu", "Pomeranian", "Poodle", "Chihuahua", "Pug", "Siberian Husky", "German Shepherd", "Beagle", "Dachshund", "French Bulldog", "Maltese", "Boxer", "Rottweiler", "Cocker Spaniel", "Yorkshire Terrier", "Shiba Inu", "Border Collie", "Australian Shepherd", "Jack Russell Terrier", "Doberman Pinscher", "Great Dane", "Corgi", "Miniature Pinscher", "Bichon Frise", "Bull Terrier", "Cavalier King Charles Spaniel", "Belgian Malinois", "Chow Chow", "Alaskan Malamute", "Basenji", "Cane Corso", "English Springer Spaniel", "Irish Setter", "Havanese", "Shar Pei", "Lhasa Apso", "American Bully", "Pit Bull Terrier", "Bullmastiff", "Samoyed", "Tibetan Terrier", "American Eskimo Dog", "Old English Sheepdog", "Dalmatian", "Whippet", "Greyhound", "Akita"
     ];
 
     const catBreeds = [
-        "Persian", "Siamese", "Ragdoll", "Bengal", "Munchkin",
-        "British Shorthair", "Sphynx"
+        "Puspin", "Domestic Shorthair", "Persian", "Siamese", "Maine Coon", "Ragdoll", "Bengal", "British Shorthair", "Scottish Fold", "Sphynx", "Norwegian Forest", "Russian Blue", "Exotic Shorthair", "Burmese", "Himalayan", "Abyssinian", "Oriental Shorthair", "Turkish Angora", "Tonkinese", "Birman", "Savannah", "Cornish Rex", "Devon Rex", "Egyptian Mau", "Manx", "Ragamuffin", "Chartreux", "Balinese", "Japanese Bobtail", "American Shorthair", "Australian Mist", "LaPerm", "Singapura", "Selkirk Rex", "Siberian", "Ocicat", "Serengeti", "Pixiebob", "Khao Manee", "Korat", "Lykoi", "Peterbald", "Chausie", "Turkish Van", "American Bobtail", "Brazilian Shorthair", "California Spangled", "Oriental Longhair", "Cymric", "Burmilla"
     ];
 
+    let currentBreeds = [];
+
+    function populateBreeds(list, searchTerm = '') {
+        const breedList = document.getElementById('breedList');
+        breedList.innerHTML = ""; // Clear
+
+        const filteredList = list.filter(breed => breed.toLowerCase().includes(searchTerm.toLowerCase()));
+
+        filteredList.forEach(b => {
+            const li = document.createElement("li");
+            li.textContent = b;
+            li.addEventListener('click', function() {
+                document.getElementById('breedSearch').value = b;
+                document.getElementById('breedSelect').value = b;
+                breedList.style.display = 'none';
+            });
+            breedList.appendChild(li);
+        });
+    }
+
     document.getElementById('typeSelect').addEventListener('change', function() {
-
         const type = this.value;
-        const breedDropdown = document.getElementById('breedSelect');
-
-        breedDropdown.innerHTML = ""; // Clear
-
-        let list = [];
+        const searchInput = document.getElementById('breedSearch');
+        const breedList = document.getElementById('breedList');
+        searchInput.value = ''; // Reset search
+        document.getElementById('breedSelect').value = '';
 
         if (type === "Dog") {
-            list = dogBreeds;
+            currentBreeds = dogBreeds;
         } else if (type === "Cat") {
-            list = catBreeds;
+            currentBreeds = catBreeds;
         } else {
-            breedDropdown.innerHTML = "<option>Select type first...</option>";
+            currentBreeds = [];
+            breedList.innerHTML = '';
             return;
         }
 
-        list.forEach(b => {
-            const option = document.createElement("option");
-            option.value = b;
-            option.textContent = b;
-            breedDropdown.appendChild(option);
-        });
+        populateBreeds(currentBreeds);
+    });
+
+    document.getElementById('breedSearch').addEventListener('focus', function() {
+        if (currentBreeds.length > 0) {
+            document.getElementById('breedList').style.display = 'block';
+        }
+    });
+
+    document.getElementById('breedSearch').addEventListener('blur', function() {
+        setTimeout(() => {
+            document.getElementById('breedList').style.display = 'none';
+        }, 150); // Delay to allow click on li
+    });
+
+    document.getElementById('breedSearch').addEventListener('input', function() {
+        const searchTerm = this.value;
+        if (currentBreeds.length > 0) {
+            populateBreeds(currentBreeds, searchTerm);
+            document.getElementById('breedList').style.display = 'block';
+        }
     });
 </script>
 

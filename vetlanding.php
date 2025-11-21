@@ -192,7 +192,7 @@
   <header style="padding: 20px 40px; display: flex; justify-content: space-between; align-items: center;">
     <h2 style="margin: 0; font-weight: 700;">DIAGNOPET</h2>
     <nav>
-      <a href="index.php" style="margin-right: 20px; color: #333; text-decoration: none;">About</a>
+      <a href="index.php" style="margin-right: 20px; color: #333; text-decoration: none;">Home</a>
       <a href="vet-login.php" style="padding: 10px 20px; border: 2px solid #007bff; border-radius: 30px; text-decoration: none; color:#007bff; font-weight:600;">Login</a>
     </nav>
   </header>
