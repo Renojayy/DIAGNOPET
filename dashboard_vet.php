@@ -110,10 +110,9 @@ $user_name = $_SESSION['vet_name'];
     <h4 class="mb-4"><i class="fas fa-user-md"></i> Vet Dashboard</h4>
     <nav class="nav flex-column">
       <a class="nav-link active" href="#dashboard"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
-      <a class="nav-link" href="#appointments"><i class="fas fa-calendar-check"></i> Appointments</a>
-      <a class="nav-link" href="#patients"><i class="fas fa-users"></i> Patients</a>
+      <a class="nav-link" href="vet_appointments.php"><i class="fas fa-calendar-check"></i> Appointments</a>
       <a class="nav-link" href="#billing"><i class="fas fa-credit-card"></i> Billing</a>
-      <a class="nav-link" href="#settings"><i class="fas fa-cog"></i> Settings</a>
+      <a class="nav-link" href="vet_settings.php"><i class="fas fa-cog"></i> Settings</a>
       <a class="nav-link" href="logout.php"><i class="fas fa-sign-out-alt"></i> Logout</a>
     </nav>
   </div>
@@ -121,9 +120,33 @@ $user_name = $_SESSION['vet_name'];
   <div class="main-content">
     <div class="d-flex justify-content-between align-items-center mb-4">
       <h2>Welcome, <?php echo htmlspecialchars($user_name); ?>!</h2>
-      <div>
-        <button class="btn btn-primary me-2"><i class="fas fa-plus"></i> Add Patient</button>
-        <button class="btn btn-outline-primary"><i class="fas fa-calendar-plus"></i> Schedule Appointment</button>
+      <div class="d-flex">
+        <div class="dropdown me-2">
+          <button class="btn btn-outline-primary dropdown-toggle" type="button" id="notificationDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+            <i class="fas fa-bell"></i> Notifications
+          </button>
+          <ul class="dropdown-menu" aria-labelledby="notificationDropdown">
+            <li><h6 class="dropdown-header">Recent Notifications</h6></li>
+            <li><a class="dropdown-item" href="#"><i class="fas fa-calendar-check"></i> Appointment reminder: Buddy check-up today at 10:00 AM</a></li>
+            <li><a class="dropdown-item" href="#"><i class="fas fa-user-md"></i> New consultation request from John Doe</a></li>
+            <li><a class="dropdown-item" href="#"><i class="fas fa-exclamation-triangle"></i> Urgent: Whiskers vaccination due</a></li>
+            <li><hr class="dropdown-divider"></li>
+            <li><a class="dropdown-item text-center" href="#">View All Notifications</a></li>
+          </ul>
+        </div>
+        <div class="dropdown">
+          <button class="btn btn-outline-primary dropdown-toggle" type="button" id="messageDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+            <i class="fas fa-envelope"></i> Messages
+          </button>
+          <ul class="dropdown-menu" aria-labelledby="messageDropdown">
+            <li><h6 class="dropdown-header">Recent Messages</h6></li>
+            <li><a class="dropdown-item" href="#"><i class="fas fa-user"></i> John Doe: "Can we reschedule Buddy's appointment?"</a></li>
+            <li><a class="dropdown-item" href="#"><i class="fas fa-user"></i> Jane Smith: "Thank you for the great service!"</a></li>
+            <li><a class="dropdown-item" href="#"><i class="fas fa-user"></i> Vet Clinic: "New vaccination guidelines available."</a></li>
+            <li><hr class="dropdown-divider"></li>
+            <li><a class="dropdown-item text-center" href="#">View All Messages</a></li>
+          </ul>
+        </div>
       </div>
     </div>
 
@@ -170,7 +193,7 @@ $user_name = $_SESSION['vet_name'];
       <div class="col-md-8">
         <div class="card">
           <div class="card-header">
-            <h5><i class="fas fa-users"></i> Recent Patients</h5>
+            <h5><i class="fas fa-users"></i> Your Patients</h5>
           </div>
           <div class="card-body">
             <div class="table-responsive">
@@ -242,37 +265,105 @@ $user_name = $_SESSION['vet_name'];
         </div>
       </div>
       <div class="col-md-4">
-        <div class="card">
+        <div class="card" id="appointments">
           <div class="card-header">
-            <h5><i class="fas fa-calendar"></i> Upcoming Appointments</h5>
+            <h5><i class="fas fa-calendar"></i>  Vet Appointments</h5>
           </div>
           <div class="card-body">
-            <ul class="list-group list-group-flush">
-              <li class="list-group-item d-flex justify-content-between align-items-center">
-                Buddy - Check-up
-                <span class="badge bg-primary rounded-pill">Today 10:00 AM</span>
-              </li>
-              <li class="list-group-item d-flex justify-content-between align-items-center">
-                Whiskers - Vaccination
-                <span class="badge bg-primary rounded-pill">Today 2:00 PM</span>
-              </li>
-              <li class="list-group-item d-flex justify-content-between align-items-center">
-                Tweetie - Grooming
-                <span class="badge bg-secondary rounded-pill">Tomorrow 9:00 AM</span>
-              </li>
-              <li class="list-group-item d-flex justify-content-between align-items-center">
-                Goldie - Water Change
-                <span class="badge bg-secondary rounded-pill">Tomorrow 11:00 AM</span>
-              </li>
-              <li class="list-group-item d-flex justify-content-between align-items-center">
-                Fluffy - Dental
-                <span class="badge bg-secondary rounded-pill">May 18 3:00 PM</span>
-              </li>
-            </ul>
+            <div class="table-responsive">
+              <table class="table table-hover">
+                <thead>
+                  <tr>
+                    <th>Pet Name</th>
+                    <th>Type</th>
+                    <th>Date & Time</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>Buddy</td>
+                    <td>Check-up</td>
+                    <td><span class="badge bg-primary rounded-pill">Today 10:00 AM</span></td>
+                  </tr>
+                  <tr>
+                    <td>Whiskers</td>
+                    <td>Vaccination</td>
+                    <td><span class="badge bg-primary rounded-pill">Today 2:00 PM</span></td>
+                  </tr>
+                  <tr>
+                    <td>Tweetie</td>
+                    <td>Grooming</td>
+                    <td><span class="badge bg-secondary rounded-pill">Tomorrow 9:00 AM</span></td>
+                  </tr>
+                  <tr>
+                    <td>Goldie</td>
+                    <td>Water Change</td>
+                    <td><span class="badge bg-secondary rounded-pill">Tomorrow 11:00 AM</span></td>
+                  </tr>
+                  <tr>
+                    <td>Fluffy</td>
+                    <td>Dental</td>
+                    <td><span class="badge bg-secondary rounded-pill">May 18 3:00 PM</span></td>
+                  </tr>
+                  <tr class="extra-appointments" style="display: none;">
+                    <td>Max</td>
+                    <td>Surgery</td>
+                    <td><span class="badge bg-danger rounded-pill">May 19 10:00 AM</span></td>
+                  </tr>
+                  <tr class="extra-appointments" style="display: none;">
+                    <td>Bella</td>
+                    <td>Check-up</td>
+                    <td><span class="badge bg-primary rounded-pill">May 20 11:00 AM</span></td>
+                  </tr>
+                  <tr class="extra-appointments" style="display: none;">
+                    <td>Charlie</td>
+                    <td>Vaccination</td>
+                    <td><span class="badge bg-warning rounded-pill">May 21 2:00 PM</span></td>
+                  </tr>
+                  <tr class="extra-appointments" style="display: none;">
+                    <td>Luna</td>
+                    <td>Grooming</td>
+                    <td><span class="badge bg-info rounded-pill">May 22 9:00 AM</span></td>
+                  </tr>
+                  <tr class="extra-appointments" style="display: none;">
+                    <td>Rocky</td>
+                    <td>Dental</td>
+                    <td><span class="badge bg-success rounded-pill">May 23 4:00 PM</span></td>
+                  </tr>
+                  <tr class="extra-appointments" style="display: none;">
+                    <td>Daisy</td>
+                    <td>Check-up</td>
+                    <td><span class="badge bg-primary rounded-pill">May 24 10:30 AM</span></td>
+                  </tr>
+                  <tr class="extra-appointments" style="display: none;">
+                    <td>Oliver</td>
+                    <td>Surgery</td>
+                    <td><span class="badge bg-danger rounded-pill">May 25 1:00 PM</span></td>
+                  </tr>
+                  <tr class="extra-appointments" style="display: none;">
+                    <td>Sophie</td>
+                    <td>Vaccination</td>
+                    <td><span class="badge bg-warning rounded-pill">May 26 3:00 PM</span></td>
+                  </tr>
+                  <tr class="extra-appointments" style="display: none;">
+                    <td>Milo</td>
+                    <td>Water Change</td>
+                    <td><span class="badge bg-secondary rounded-pill">May 27 11:00 AM</span></td>
+                  </tr>
+                  <tr class="extra-appointments" style="display: none;">
+                    <td>Zoe</td>
+                    <td>Grooming</td>
+                    <td><span class="badge bg-info rounded-pill">May 28 2:00 PM</span></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
       </div>
     </div>
+
+
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>

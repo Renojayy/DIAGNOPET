@@ -24,24 +24,28 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
         $error = "Invalid email format.";
     } else {
-        // Query the database
-        $stmt = $conn->prepare("SELECT id, name, password FROM veterinarian WHERE email = ?");
+        // Query the database including status
+        $stmt = $conn->prepare("SELECT id, name, password, status FROM veterinarian WHERE email = ?");
         $stmt->bind_param("s", $email);
         $stmt->execute();
         $stmt->store_result();
-        $stmt->bind_result($id, $name, $hashed_password);
+        $stmt->bind_result($id, $name, $hashed_password, $status);
 
         if ($stmt->num_rows > 0) {
             $stmt->fetch();
-            if (password_verify($password, $hashed_password)) {
+
+            // Check approval status
+            if ($status !== 'approved') {
+                $error = "Your account is still pending review. Please wait for approval before logging in.";
+            } else if (password_verify($password, $hashed_password)) {
                 // Successful login — store session
                 $_SESSION['vet_id'] = $id;
                 $_SESSION['vet_name'] = $name;
                 $_SESSION['vet_email'] = $email;
                 $_SESSION['vet_logged_in'] = true;
 
-                // Redirect to terms page
-                header("Location: termsandconditions_vet.php");
+                // Redirect to dashboard
+                header("Location: dashboard_vet.php");
                 exit();
             } else {
                 $error = "Invalid password.";

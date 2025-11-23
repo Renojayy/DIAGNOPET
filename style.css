@@ -8,7 +8,7 @@ body {
 
 /* HEADER */
 header {
-  background: linear-gradient(90deg, #0073e6, #00bcd4);
+  background: linear-gradient(90deg, #5c4fff, #5c4fff);
   color: white;
   padding: 15px 25px;
   text-align: center;
@@ -80,7 +80,7 @@ header span {
   width: 60px;
   height: 60px;
   border-radius: 50%;
-  background: #0073e6;
+  background: #5c4fff;
   color: white;
   display: flex;
   align-items: center;
@@ -104,7 +104,7 @@ header span {
   overflow: hidden;
 }
 #chat-header {
-  background: #0073e6;
+  background: #5c4fff;
   color: white;
   padding: 10px;
   text-align: center;
@@ -125,7 +125,7 @@ header span {
   font-size: 14px;
 }
 #chat-send {
-  background: #0073e6;
+  background: #5c4fff;
   border: none;
   color: white;
   padding: 0 15px;
@@ -163,10 +163,10 @@ header span {
 }
 .landing-content h1 {
   font-size: 3rem;
-  color: #0073e6;
+  color: #5c4fff;
 }
 .get-started-btn {
-  background: #0073e6;
+  background: #5c4fff;
   color: white;
   padding: 12px 30px;
   border-radius: 25px;
@@ -177,7 +177,7 @@ header span {
   transition: 0.3s;
 }
 .get-started-btn:hover {
-  background: #005bb5;
+  background: #473ecf;
 }
 
 /* BUBBLES */
@@ -244,7 +244,7 @@ header span {
   margin-top: 20px;
 }
 #vet-chat-header {
-  background: #0073e6;
+  background: #5c4fff;
   color: white;
   padding: 10px;
   text-align: center;
@@ -266,7 +266,7 @@ header span {
   font-size: 14px;
 }
 #vet-chat-send {
-  background: #0073e6;
+  background: #5c4fff;
   border: none;
   color: white;
   padding: 0 15px;

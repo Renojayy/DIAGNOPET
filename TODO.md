@@ -1,6 +1,13 @@
-# TODO for Adjusting Map Layout in vets.php
+Vet-Register.php Update Tasks:
 
-- [x] Move the map widget (.widget) from the sidebar to the main-content area, placing it above the .container (vet cards).
-- [x] Update CSS for .main-content to use flex-direction: column; with the map at the top, and below it a flex row containing the sidebar and .container.
-- [x] Adjust sidebar width and ensure responsive design (stack vertically on mobile).
-- [x] Test the layout in a browser to verify map functionality and responsiveness.
+- [ ] Remove verification_status radio buttons from the form and PHP POST processing.
+- [ ] Add expiration_date input field (type=date) to the form.
+- [ ] Add input fields for uploading an image and a file attachment, allowing users to upload files.
+- [ ] Set form enctype to "multipart/form-data".
+- [ ] Update PHP POST handler to process expiration_date and uploaded files:
+  - Validate uploaded files (file type, size).
+  - Move uploaded files to the "uploads" folder.
+  - Save file paths or names if needed (currently just storing files).
+- [ ] Provide proper error handling for upload failures.
+
+Once complete, test registration form for new fields and file upload functionality.

@@ -34,7 +34,7 @@ $conn->close();
   body {
     margin: 0;
     font-family: 'Poppins', sans-serif;
-    background: #f5f6f8;
+    background: #a0c7f1ff;
     padding: 20px 0;
   }
   .header {
@@ -42,18 +42,18 @@ $conn->close();
     justify-content: space-between;
     align-items: center;
     padding: 20px 40px;
-    background: white;
+    background: #5c4fff ;
     box-shadow: 0 2px 10px rgba(0,0,0,0.1);
     margin-bottom: 20px;
   }
   .header h1 {
     font-size: 24px;
     font-weight: 600;
-    color: #007bff;
+    color: #ffff;
   }
   .back-btn {
-    background: #007bff;
-    color: white;
+    background: #ffff;
+    color: #000;
     border: none;
     padding: 10px 20px;
     border-radius: 5px;
@@ -111,7 +111,7 @@ $conn->close();
   }
   .sidebar {
     width: 250px;
-    background: white;
+    background: #5c4fff ;
     padding: 20px;
     box-shadow: 0 2px 10px rgba(0,0,0,0.1);
     height: fit-content;
@@ -120,11 +120,12 @@ $conn->close();
     font-size: 18px;
     font-weight: 600;
     margin-bottom: 15px;
+    color: #fff;
   }
   .sidebar ul { list-style: none; padding: 0; }
   .sidebar li { margin-bottom: 10px; }
-  .sidebar a { text-decoration: none; color: #333; font-size: 16px; }
-  .sidebar a:hover { color: #007bff; }
+  .sidebar a { text-decoration: none; color: #fff; font-size: 16px; }
+  .sidebar a:hover { color: #cce5ff; }
 
   #clinicMap {
     width: 100%;
@@ -243,9 +244,28 @@ $conn->close();
     .card { width: 90%; }
     .map-widget { width: 95%; }
   }
+
+  /* --- Floating Bubbles --- */
+  .bubble {
+    position: absolute;
+    border-radius: 50%;
+    background: rgba(0, 123, 255, 0.15);
+    animation: float 8s infinite ease-in-out;
+    z-index: 0;
+  }
+
+  @keyframes float {
+    0% { transform: translateY(0) scale(1); }
+    50% { transform: translateY(-20px) scale(1.1); }
+    100% { transform: translateY(0) scale(1); }
+  }
 </style>
 </head>
 <body>
+  <div class="bubble" style="width:120px;height:120px;top:20%;left:15%;animation-delay:0s;"></div>
+  <div class="bubble" style="width:80px;height:80px;top:60%;left:70%;animation-delay:2s;"></div>
+  <div class="bubble" style="width:100px;height:100px;top:40%;left:40%;animation-delay:4s;"></div>
+  <div class="bubble" style="width:60px;height:60px;top:80%;left:25%;animation-delay:1s;"></div>
 
 <div class="header">
   <h1>Veterinarians in Diagnopet</h1>

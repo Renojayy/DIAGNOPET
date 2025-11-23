@@ -3,21 +3,52 @@ include 'db_connect.php';
 
 // Handle form submission
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    $name = trim($_POST['name']);
+    $first_name = trim($_POST['first_name']);
+    $last_name = trim($_POST['last_name']);
+    $name = $first_name . ' ' . $last_name;
     $specialization = trim($_POST['specialization']);
     $license_number = trim($_POST['license_number']);
-    $verification_status = isset($_POST['verification']) ? $_POST['verification'] : 'not_verified';
+    // Remove verification_status from processing
     $password = password_hash($_POST['password'], PASSWORD_DEFAULT);
     $email = trim($_POST['email']);
     $location = trim($_POST['location']);
     $clinic_name = trim($_POST['clinic_name']);
+    // New field for expiration date
+    $expiration_date = isset($_POST['expiration_date']) ? trim($_POST['expiration_date']) : null;
+
+    // Handle file uploads
+    $file_path = null;
+
+    if (isset($_FILES['attachment']) && $_FILES['attachment']['error'] == UPLOAD_ERR_OK) {
+        $file_tmp_name = $_FILES['attachment']['tmp_name'];
+        $file_name = basename($_FILES['attachment']['name']);
+        $file_ext = strtolower(pathinfo($file_name, PATHINFO_EXTENSION));
+        $allowed_file_ext = array('jpg', 'jpeg', 'png', 'gif', 'pdf', 'doc', 'docx', 'txt', 'xls', 'xlsx');
+        if (in_array($file_ext, $allowed_file_ext)) {
+            $target_dir = "uploads/images/";
+            if (!is_dir($target_dir)) {
+                mkdir($target_dir, 0755, true);
+            }
+            // Sanitize combined first and last name to create a valid filename (lowercase, replace spaces with _, remove non-alphanumeric except _ and -)
+            $sanitized_name = strtolower($name);
+            $sanitized_name = preg_replace('/\s+/', '_', $sanitized_name);
+            $sanitized_name = preg_replace('/[^a-z0-9_\-]/', '', $sanitized_name);
+            $file_path = $target_dir . $sanitized_name . '.' . $file_ext;
+            
+            if (!move_uploaded_file($file_tmp_name, $file_path)) {
+                $error = "Failed to upload attachment.";
+            }
+        } else {
+            $error = "Invalid file type. Allowed types: jpg, jpeg, png, gif, pdf, doc, docx, txt, xls, xlsx.";
+        }
+    }
 
     // Basic validation
-    if (empty($name) || empty($specialization) || empty($license_number) || empty($password) || empty($email) || empty($location) || empty($clinic_name)) {
-        $error = "All fields are required.";
+    if (empty($first_name) || empty($last_name) || empty($specialization) || empty($license_number) || empty($password) || empty($email) || empty($location) || empty($clinic_name) || empty($expiration_date)) {
+        $error = "All fields are required including expiration date.";
     } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
         $error = "Invalid email format.";
-    } else {
+    } elseif (!isset($error)) {
         // Check if email already exists
         $stmt = $conn->prepare("SELECT id FROM veterinarian WHERE email = ?");
         $stmt->bind_param("s", $email);
@@ -26,11 +57,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         if ($stmt->num_rows > 0) {
             $error = "Email already registered.";
         } else {
-            // Insert new vet
-            $stmt = $conn->prepare("INSERT INTO veterinarian (name, specialization, license_number, verification_status, password, email, location, clinic_name) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
-            $stmt->bind_param("ssssssss", $name, $specialization, $license_number, $verification_status, $password, $email, $location, $clinic_name);
+            // Insert new vet including expiration_date; image_path and file_path can be stored if DB supports
+            $stmt = $conn->prepare("INSERT INTO veterinarian (name, specialization, license_number, password, email, location, clinic_name, expiration_date, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
+            $status = 'pending';
+            $stmt->bind_param("sssssssss", $name, $specialization, $license_number, $password, $email, $location, $clinic_name, $expiration_date, $status);
             if ($stmt->execute()) {
-                header("Location: vet-login.php");
+                // Redirect to a waiting page after registration instead of login page
+                header("Location: vet-review-wait.php");
                 exit();
             } else {
                 $error = "Registration failed. Please try again.";
@@ -84,11 +117,18 @@ $conn->close();
       <?php if (isset($error)) echo "<p class='text-red-500'>$error</p>"; ?>
     </div>
 
-    <form id="vetForm" action="vet-register.php" method="POST" class="space-y-4">
-      <div class="relative">
-        <i data-feather="user" class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
-        <input type="text" name="name" id="name" placeholder="Name" required
-          class="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition">
+<form id="vetForm" action="vet-register.php" method="POST" enctype="multipart/form-data" class="space-y-4">
+      <div class="relative flex gap-4">
+        <div class="flex-1 relative">
+          <i data-feather="user" class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+          <input type="text" name="first_name" id="first_name" placeholder="First Name" required
+            class="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition">
+        </div>
+        <div class="flex-1 relative">
+          <i data-feather="user" class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+          <input type="text" name="last_name" id="last_name" placeholder="Last Name" required
+            class="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition">
+        </div>
       </div>
 
       <div class="relative">
@@ -103,18 +143,21 @@ $conn->close();
           class="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition">
       </div>
 
-      <div class="space-y-2">
-        <label class="block text-gray-700 font-medium">Verification Status</label>
-        <div class="flex items-center space-x-4">
-          <label class="flex items-center">
-            <input type="radio" name="verification" value="verified" class="mr-2">
-            Verify
-          </label>
-          <label class="flex items-center">
-            <input type="radio" name="verification" value="not_verified" checked class="mr-2">
-            Non Verify
-          </label>
-        </div>
+      <!-- Removed Verification Status choice -->
+
+      <div class="relative">
+        <label for="expiration_date" class="block text-gray-700 font-medium mb-1">Expiration Date</label>
+        <input type="date" name="expiration_date" id="expiration_date" required
+          class="w-full pl-3 pr-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition">
+      </div>
+
+      
+      <!-- Removed image upload input field -->
+
+      <div class="relative">
+        <label for="attachment" class="block text-gray-700 font-medium mb-1">UPLOAD PRC ID</label>
+        <input type="file" name="attachment" id="attachment" accept="image/*"
+          class="w-full border border-gray-200 rounded-lg p-2 focus:ring-2 focus:ring-primary focus:border-transparent transition">
       </div>
 
       <div class="relative">
