@@ -1,13 +1,8 @@
-Vet-Register.php Update Tasks:
+# TODO for Restrict Vet Settings Update to Password Only
 
-- [ ] Remove verification_status radio buttons from the form and PHP POST processing.
-- [ ] Add expiration_date input field (type=date) to the form.
-- [ ] Add input fields for uploading an image and a file attachment, allowing users to upload files.
-- [ ] Set form enctype to "multipart/form-data".
-- [ ] Update PHP POST handler to process expiration_date and uploaded files:
-  - Validate uploaded files (file type, size).
-  - Move uploaded files to the "uploads" folder.
-  - Save file paths or names if needed (currently just storing files).
-- [ ] Provide proper error handling for upload failures.
-
-Once complete, test registration form for new fields and file upload functionality.
+- [x] Remove handling of profile update POST request in vet_settings.php to disallow profile field edits.
+- [x] Disable or remove profile update UI elements/links in vet_settings.php (commented out Profile Settings link).
+- [x] Keep password change functionality intact and verified.
+- [x] Keep account deletion handling intact.
+- [ ] Test vet_settings.php to ensure only password change and account deletion are possible, no profile fields editable.
+- [ ] Inform user of completion and readiness for testing.

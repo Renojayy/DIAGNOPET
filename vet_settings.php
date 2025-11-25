@@ -18,7 +18,41 @@ if (!isset($_SESSION['terms_accepted']) || $_SESSION['terms_accepted'] !== true)
     exit();
 }
 
+include 'db_connect.php';
+
 $user_name = $_SESSION['vet_name'];
+
+// Initialize variables for form fields and errors
+$vet = [
+    'name' => '',
+    'specialization' => '',
+    'license_number' => '',
+    'email' => '',
+    'clinic_address' => '',
+    'city' => '',
+    'clinic_name' => '',
+    'expiration_date' => '',
+    'prc_id_path' => '',
+];
+
+// Load vet info from DB by vet name
+$stmt = $conn->prepare("SELECT name, specialization, license_number, email, clinic_address, city, clinic_name, expiration_date, prc_id_path, password FROM veterinarian WHERE name = ?");
+$stmt->bind_param("s", $user_name);
+$stmt->execute();
+$result = $stmt->get_result();
+if ($result && $result->num_rows === 1) {
+    $vet = $result->fetch_assoc();
+} else {
+    // Vet not found, log out or error
+    session_unset();
+    session_destroy();
+    header("Location: vet-login.php");
+    exit();
+}
+$stmt->close();
+
+$conn->close();
+
 ?>
 
 <!DOCTYPE html>
@@ -112,6 +146,20 @@ $user_name = $_SESSION['vet_name'];
         margin-left: 0;
       }
     }
+    .delete-account-btn {
+      background-color: #ff4d4f;
+      border-color: #ff4d4f;
+      color: white;
+      font-weight: bold;
+      text-align: center;
+      transition: background-color 0.3s, border-color 0.3s;
+    }
+    .delete-account-btn:hover {
+      background-color: #d9363e;
+      border-color: #d9363e;
+      color: white;
+      text-decoration: none;
+    }
   </style>
 </head>
 <body>
@@ -120,9 +168,9 @@ $user_name = $_SESSION['vet_name'];
     <nav class="nav flex-column">
       <a class="nav-link" href="dashboard_vet.php"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
       <a class="nav-link" href="vet_appointments.php"><i class="fas fa-calendar-check"></i> Appointments</a>
-      <a class="nav-link" href="#billing"><i class="fas fa-credit-card"></i> Billing</a>
       <a class="nav-link active" href="vet_settings.php"><i class="fas fa-cog"></i> Settings</a>
-      <a class="nav-link" href="logout.php"><i class="fas fa-sign-out-alt"></i> Logout</a>
+      <!-- Logout button triggers confirmation modal -->
+      <a href="logout.php" id="logoutBtn" class="nav-link"><i class="fas fa-sign-out-alt"></i> Logout</a>
     </nav>
   </div>
 
@@ -138,30 +186,85 @@ $user_name = $_SESSION['vet_name'];
             <h5><i class="fas fa-cog"></i> Vet Settings</h5>
           </div>
           <div class="card-body">
-            <a href="#" class="setting-btn">
+            <a href="updateprofilevets.php" class="setting-btn">
               <i class="fas fa-user"></i> Profile Settings
             </a>
-            <a href="#" class="setting-btn">
-              <i class="fas fa-bell"></i> Notification Preferences
-            </a>
-            <a href="#" class="setting-btn">
-              <i class="fas fa-lock"></i> Privacy Settings
-            </a>
-            <a href="#" class="setting-btn">
-              <i class="fas fa-credit-card"></i> Billing & Payments
-            </a>
-            <a href="#" class="setting-btn">
-              <i class="fas fa-shield-alt"></i> Security Settings
-            </a>
-            <a href="#" class="setting-btn">
-              <i class="fas fa-language"></i> Language & Region
-            </a>
-            <a href="#" class="setting-btn">
-              <i class="fas fa-question-circle"></i> Help & Support
-            </a>
-            <a href="#" class="setting-btn">
+<a href="vet_billing.php" class="setting-btn" id="billingPaymentsBtn">
+  <i class="fas fa-credit-card"></i> Billing & Payments
+</a>
+<a href="#" class="setting-btn" id="helpSupportBtn">
+  <i class="fas fa-question-circle"></i> Help & Support
+</a>
+
+<!-- Modal for Help & Support -->
+<div class="modal fade" id="helpSupportModal" tabindex="-1" aria-labelledby="helpSupportModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="helpSupportModalLabel">Help & Support</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body" style="white-space: pre-line;">
+        If you need assistance, have questions, or encounter any issues, our support team is here to help. Please feel free to contact us anytime at diagnopet9@gmail.com, and we’ll be glad to assist you promptly.
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+            <a href="#" id="aboutDiagnopetBtn" class="setting-btn">
               <i class="fas fa-info-circle"></i> About Diagnopet
             </a>
+            </form>
+            <!-- Delete Account Button -->
+            <button id="deleteAccountBtn" type="button" class="setting-btn delete-account-btn">
+              <i class="fas fa-trash-alt"></i> DELETE ACCOUNT
+            </button>
+
+            <!-- Modal for About Diagnopet -->
+            <div class="modal fade" id="aboutDiagnopetModal" tabindex="-1" aria-labelledby="aboutDiagnopetModalLabel" aria-hidden="true">
+              <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                  <div class="modal-header">
+                    <h5 class="modal-title" id="aboutDiagnopetModalLabel">About Diagnopet</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                  </div>
+                  <div class="modal-body" style="white-space: pre-line;">
+                    What is Diagnopet? It is a web-based diagnostic support system created to assist pet owners in understanding their pets’ health conditions. Our platform is designed to provide a preliminary evaluation of symptoms based on the information you provide, offering helpful insights before consulting a professional veterinarian.
+                    At Diagnopet, we believe that early awareness leads to better care. Our goal is to empower pet owners with accessible, reliable, and user-friendly tools that promote proactive pet health management. Whether it’s a sudden change in behavior or visible symptoms, Diagnopet helps you take the first step in identifying possible conditions and making informed decisions for your pet’s well-being.
+                  </div>
+                  <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Modal for confirmation -->
+            <div id="confirmModal" class="modal" style="display:none; position: fixed; z-index: 1050; top: 0; left: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.5);">
+              <div class="modal-content" style="background-color: white; margin: 10% auto; padding: 20px; border-radius: 8px; box-shadow: 0 5px 15px rgba(0,0,0,0.3); max-width: 400px; text-align: center;">
+                <p style="font-size: 18px; margin-bottom: 20px;">Are you sure you want to delete your Account? This action cannot be undo.</p>
+                <form method="post" style="display:inline;">
+                <div style="display: flex; justify-content: center; gap: 15px;">
+                  <form method="post" style="display:inline;">
+                    <button type="submit" name="delete_account" value="yes" class="btn btn-danger" style="min-width: 80px;">Yes</button>
+                  </form>
+                  <button id="cancelBtn" class="btn btn-primary" style="min-width: 80px;">No</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Modal for Logout confirmation -->
+            <div id="logoutConfirmModal" class="modal" style="display:none; position: fixed; z-index: 1050; top: 0; left: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.5);">
+              <div class="modal-content" style="background-color: white; margin: 10% auto; padding: 20px; border-radius: 8px; box-shadow: 0 5px 15px rgba(0,0,0,0.3); max-width: 400px; text-align: center;">
+                <p style="font-size: 18px; margin-bottom: 20px;">Are you sure you want to log out?</p>
+                <div style="display: flex; justify-content: center; gap: 15px;">
+                  <button id="logoutYesBtn" class="btn btn-danger" style="min-width: 80px;">Yes</button>
+                  <button id="logoutNoBtn" class="btn btn-primary" style="min-width: 80px;">No</button>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -179,6 +282,115 @@ $user_name = $_SESSION['vet_name'];
       </div>
     </div>
   </div>
+
+<!-- Modal for Billing & Payments -->
+<div class="modal fade" id="billingPaymentsModal" tabindex="-1" aria-labelledby="billingPaymentsModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="billingPaymentsModalLabel">Billing & Payments</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body" style="white-space: pre-line;">
+        Set up and manage your financial account to securely receive payments and ensure smooth transaction processing.
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-primary">Proceed</button>
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Remove the old confirm function
+
+  // New JS for modal handling
+  document.getElementById('deleteAccountBtn').addEventListener('click', function() {
+    document.getElementById('confirmModal').style.display = 'block';
+  });
+
+  document.getElementById('cancelBtn').addEventListener('click', function() {
+    document.getElementById('confirmModal').style.display = 'none';
+  });
+
+  // Close modal if clicked outside modal content
+  window.onclick = function(event) {
+    const modal = document.getElementById('confirmModal');
+    if (event.target == modal) {
+      modal.style.display = 'none';
+    }
+  };
+
+  // Show About Diagnopet Modal on button click
+  document.getElementById('aboutDiagnopetBtn').addEventListener('click', function(event) {
+    event.preventDefault();
+    // Bootstrap 5 modal show
+    var aboutModal = new bootstrap.Modal(document.getElementById('aboutDiagnopetModal'), {});
+    aboutModal.show();
+  });
+
+  // Initialize Bootstrap tooltip for Help & Support button
+  var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+  var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+    return new bootstrap.Tooltip(tooltipTriggerEl)
+  })
+
+  // Show Help & Support Modal on button click
+  document.getElementById('helpSupportBtn').addEventListener('click', function(event) {
+    event.preventDefault();
+    var helpModal = new bootstrap.Modal(document.getElementById('helpSupportModal'), {});
+    helpModal.show();
+  });
+
+  // Show Billing & Payments Modal on button click
+  document.getElementById('billingPaymentsBtn').addEventListener('click', function(event) {
+    event.preventDefault();
+    var billingModal = new bootstrap.Modal(document.getElementById('billingPaymentsModal'), {});
+    billingModal.show();
+  });
+
+  // Alert for not implemented buttons
+  const alertNotImplemented = (event) => {
+    event.preventDefault();
+    alert('This feature is not implemented yet.');
+  };
+
+  // Attach alerts
+
+  // Logout modal handling
+  const logoutBtn = document.getElementById('logoutBtn');
+  const logoutConfirmModal = document.getElementById('logoutConfirmModal');
+  const logoutYesBtn = document.getElementById('logoutYesBtn');
+  const logoutNoBtn = document.getElementById('logoutNoBtn');
+
+  if (logoutBtn && logoutConfirmModal && logoutYesBtn && logoutNoBtn) {
+    logoutBtn.addEventListener('click', function(event) {
+      event.preventDefault();
+      logoutConfirmModal.style.display = 'block';
+    });
+
+    logoutYesBtn.addEventListener('click', function() {
+      window.location.href = 'logout.php';
+    });
+
+    logoutNoBtn.addEventListener('click', function() {
+      logoutConfirmModal.style.display = 'none';
+    });
+  }
+
+  // Close modal if clicked outside modal content (applies for both confirmModal and logoutConfirmModal)
+  window.onclick = function(event) {
+    const confirmModal = document.getElementById('confirmModal');
+    const logoutModal = document.getElementById('logoutConfirmModal');
+    if (event.target == confirmModal) {
+      confirmModal.style.display = 'none';
+    }
+    if (event.target == logoutModal) {
+      logoutModal.style.display = 'none';
+    }
+  };
+</script>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>

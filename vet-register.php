@@ -1,24 +1,31 @@
 <?php
 include 'db_connect.php';
 
-// Handle form submission
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $first_name = trim($_POST['first_name']);
     $last_name = trim($_POST['last_name']);
     $name = $first_name . ' ' . $last_name;
-    $specialization = trim($_POST['specialization']);
+
+    $specialization = null;
+    if (isset($_POST['specialization']) && is_array($_POST['specialization'])) {
+        $specialization = implode(", ", array_map('trim', $_POST['specialization']));
+    } elseif (isset($_POST['specialization'])) {
+        $specialization = trim($_POST['specialization']);
+    }
+
     $license_number = trim($_POST['license_number']);
-    // Remove verification_status from processing
     $password = password_hash($_POST['password'], PASSWORD_DEFAULT);
     $email = trim($_POST['email']);
-    $location = trim($_POST['location']);
+    $clinic_address = trim($_POST['clinic_address']);
+    $city = trim($_POST['city']);
     $clinic_name = trim($_POST['clinic_name']);
-    // New field for expiration date
     $expiration_date = isset($_POST['expiration_date']) ? trim($_POST['expiration_date']) : null;
 
-    // Handle file uploads
-    $file_path = null;
+    // Get latitude and longitude from form
+    $latitude = isset($_POST['latitude']) ? $_POST['latitude'] : null;
+    $longitude = isset($_POST['longitude']) ? $_POST['longitude'] : null;
 
+    $file_path = null;
     if (isset($_FILES['attachment']) && $_FILES['attachment']['error'] == UPLOAD_ERR_OK) {
         $file_tmp_name = $_FILES['attachment']['tmp_name'];
         $file_name = basename($_FILES['attachment']['name']);
@@ -29,12 +36,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             if (!is_dir($target_dir)) {
                 mkdir($target_dir, 0755, true);
             }
-            // Sanitize combined first and last name to create a valid filename (lowercase, replace spaces with _, remove non-alphanumeric except _ and -)
             $sanitized_name = strtolower($name);
             $sanitized_name = preg_replace('/\s+/', '_', $sanitized_name);
             $sanitized_name = preg_replace('/[^a-z0-9_\-]/', '', $sanitized_name);
             $file_path = $target_dir . $sanitized_name . '.' . $file_ext;
-            
+
             if (!move_uploaded_file($file_tmp_name, $file_path)) {
                 $error = "Failed to upload attachment.";
             }
@@ -43,13 +49,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         }
     }
 
-    // Basic validation
-    if (empty($first_name) || empty($last_name) || empty($specialization) || empty($license_number) || empty($password) || empty($email) || empty($location) || empty($clinic_name) || empty($expiration_date)) {
+    if (empty($first_name) || empty($last_name) || empty($specialization) || empty($license_number) || empty($password) || empty($email) || empty($clinic_address) || empty($city) || empty($clinic_name) || empty($expiration_date)) {
         $error = "All fields are required including expiration date.";
     } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
         $error = "Invalid email format.";
     } elseif (!isset($error)) {
-        // Check if email already exists
         $stmt = $conn->prepare("SELECT id FROM veterinarian WHERE email = ?");
         $stmt->bind_param("s", $email);
         $stmt->execute();
@@ -57,12 +61,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         if ($stmt->num_rows > 0) {
             $error = "Email already registered.";
         } else {
-            // Insert new vet including expiration_date; image_path and file_path can be stored if DB supports
-            $stmt = $conn->prepare("INSERT INTO veterinarian (name, specialization, license_number, password, email, location, clinic_name, expiration_date, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
+            $stmt = $conn->prepare("INSERT INTO veterinarian 
+                (name, specialization, license_number, password, email, clinic_address, city, clinic_name, expiration_date, prc_id_path, status, latitude, longitude) 
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
             $status = 'pending';
-            $stmt->bind_param("sssssssss", $name, $specialization, $license_number, $password, $email, $location, $clinic_name, $expiration_date, $status);
+            $stmt->bind_param("sssssssssssss", $name, $specialization, $license_number, $password, $email, $clinic_address, $city, $clinic_name, $expiration_date, $file_path, $status, $latitude, $longitude);
             if ($stmt->execute()) {
-                // Redirect to a waiting page after registration instead of login page
                 header("Location: vet-review-wait.php");
                 exit();
             } else {
@@ -74,6 +78,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 }
 $conn->close();
 ?>
+
 
 <!DOCTYPE html>
 <html lang="en">
@@ -132,9 +137,19 @@ $conn->close();
       </div>
 
       <div class="relative">
-        <i data-feather="briefcase" class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
-        <input type="text" name="specialization" id="specialization" placeholder="Specialization" required
-          class="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition">
+        <label for="specialization_type" class="block mb-1 font-medium text-gray-700">Specialization Type</label>
+        <select name="specialization_type" id="specialization_type" required
+          class="w-full pl-3 pr-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition">
+          <option value="">Select an option</option>
+          <option value="general">General Specializations</option>
+          <option value="advanced">Advanced Medical Specialties</option>
+          <option value="both">Both</option>
+        </select>
+      </div>
+
+      <div id="specializations_container" class="mb-4 hidden">
+        <label class="block mb-1 font-medium text-gray-700">Select Specializations</label>
+        <div id="specializations_list" class="grid grid-cols-1 gap-2 max-h-56 overflow-y-auto border border-gray-200 rounded-lg p-3 bg-white"></div>
       </div>
 
       <div class="relative">
@@ -174,7 +189,13 @@ $conn->close();
 
       <div class="relative">
         <i data-feather="map-pin" class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
-        <input type="text" name="location" id="location" placeholder="Location" required
+        <input type="text" name="clinic_address" id="clinic_address" placeholder="Clinic Address" required
+          class="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition">
+      </div>
+
+      <div class="relative">
+        <i data-feather="map-pin" class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+        <input type="text" name="city" id="city" placeholder="City" required
           class="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition">
       </div>
 
@@ -183,6 +204,9 @@ $conn->close();
         <input type="text" name="clinic_name" id="clinic_name" placeholder="Clinic Name" required
           class="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition">
       </div>
+      <input type="hidden" name="latitude" id="latitude">
+      <input type="hidden" name="longitude" id="longitude">
+
 
       <button type="submit" class="w-full bg-primary hover:bg-primary/90 text-white font-medium py-3 px-4 rounded-lg transition flex items-center justify-center gap-2">
         <i data-feather="user-plus" class="w-5 h-5"></i>
@@ -204,6 +228,90 @@ $conn->close();
 
   <script>
     feather.replace();
+
+    (() => {
+      const specTypeSelect = document.getElementById('specialization_type');
+      const specContainer = document.getElementById('specializations_container');
+      const specListDiv = document.getElementById('specializations_list');
+
+      const generalSpecs = [
+        "Companion Animal Practice",
+        "Canine and Feline Practice",
+        "Feline Practice"
+      ];
+
+      const advancedSpecs = [
+        "Anesthesia and Analgesia",
+        "Cardiology",
+        "Dermatology",
+        "Emergency and Critical Care",
+        "Internal Medicine",
+        "Neurology",
+        "Nutrition",
+        "Oncology",
+        "Ophthalmology",
+        "Radiology/Diagnostic Imaging",
+        "Surgery",
+        "Veterinary Behavior"
+      ];
+
+      function renderCheckboxes(items) {
+        specListDiv.innerHTML = "";
+        items.forEach((item, idx) => {
+          const checkboxId = "spec_" + idx;
+          const wrapper = document.createElement("div");
+          wrapper.className = "flex items-center";
+
+          const checkbox = document.createElement("input");
+          checkbox.type = "checkbox";
+          checkbox.name = "specialization[]";
+          checkbox.id = checkboxId;
+          checkbox.value = item;
+          checkbox.className = "mr-2";
+
+          const label = document.createElement("label");
+          label.htmlFor = checkboxId;
+          label.textContent = item;
+          label.className = "select-none";
+
+          wrapper.appendChild(checkbox);
+          wrapper.appendChild(label);
+          specListDiv.appendChild(wrapper);
+        });
+      }
+
+      specTypeSelect.addEventListener('change', () => {
+        const val = specTypeSelect.value;
+        if (!val) {
+          specContainer.classList.add("hidden");
+          specListDiv.innerHTML = "";
+          return;
+        }
+        specContainer.classList.remove("hidden");
+
+        if (val === "general") {
+          renderCheckboxes(generalSpecs);
+        } else if (val === "advanced") {
+          renderCheckboxes(advancedSpecs);
+        } else if (val === "both") {
+          const allSpecs = [...generalSpecs, ...advancedSpecs];
+          renderCheckboxes(allSpecs);
+        }
+      });
+    })();
+
+    // Auto-fill latitude & longitude
+if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(function(position) {
+        document.getElementById('latitude').value = position.coords.latitude;
+        document.getElementById('longitude').value = position.coords.longitude;
+    }, function(error) {
+        console.warn("Geolocation error: ", error.message);
+    });
+} else {
+    console.warn("Geolocation is not supported by this browser.");
+}
+
   </script>
 </body>
 </html>

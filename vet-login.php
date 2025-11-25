@@ -35,20 +35,26 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             $stmt->fetch();
 
             // Check approval status
-            if ($status !== 'approved') {
+            if ($status === 'pending') {
                 $error = "Your account is still pending review. Please wait for approval before logging in.";
-            } else if (password_verify($password, $hashed_password)) {
-                // Successful login — store session
-                $_SESSION['vet_id'] = $id;
-                $_SESSION['vet_name'] = $name;
-                $_SESSION['vet_email'] = $email;
-                $_SESSION['vet_logged_in'] = true;
+            } else if ($status === 'rejected') {
+                $error = "Your account was rejected. Please pass the requirements again.";
+            } else if ($status === 'approved') {
+                if (password_verify($password, $hashed_password)) {
+                    // Successful login — store session
+                    $_SESSION['vet_id'] = $id;
+                    $_SESSION['vet_name'] = $name;
+                    $_SESSION['vet_email'] = $email;
+                    $_SESSION['vet_logged_in'] = true;
 
-                // Redirect to dashboard
-                header("Location: dashboard_vet.php");
-                exit();
+                    // Redirect to dashboard
+                    header("Location: dashboard_vet.php");
+                    exit();
+                } else {
+                    $error = "Invalid password.";
+                }
             } else {
-                $error = "Invalid password.";
+                $error = "Invalid account status.";
             }
         } else {
             $error = "No account found with that email.";
@@ -66,7 +72,7 @@ $conn->close();
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Vet Login - Diagnopet</title>
 <script src="https://cdn.tailwindcss.com"></script>
-<script src="https://unpkg.com/feather-icons"></script>
+<!-- Removed feather-icons script to disable JS rendering of icons -->
 <link rel="stylesheet" href="style.css">
 </head>
 <body class="bg-gradient-to-b from-blue-50 to-blue-100 min-h-screen flex items-center justify-center p-4 overflow-hidden">
@@ -94,8 +100,6 @@ $conn->close();
     </div>
 </div>
 
-<script>
-feather.replace();
-</script>
+<!-- Removed inline feather.replace() JavaScript for icon rendering -->
 </body>
 </html>

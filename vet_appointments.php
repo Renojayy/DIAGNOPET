@@ -135,9 +135,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['schedule_appointment']
     <nav class="nav flex-column">
       <a class="nav-link" href="dashboard_vet.php"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
       <a class="nav-link active" href="vet_appointments.php"><i class="fas fa-calendar-check"></i> Appointments</a>
-      <a class="nav-link" href="vet_billing.php"><i class="fas fa-credit-card"></i> Billing</a>
       <a class="nav-link" href="vet_settings.php"><i class="fas fa-cog"></i> Settings</a>
-      <a class="nav-link" href="logout.php"><i class="fas fa-sign-out-alt"></i> Logout</a>
+<a href="#" id="logoutBtn" class="nav-link"><i class="fas fa-sign-out-alt"></i> Logout</a>
     </nav>
   </div>
 
@@ -312,6 +311,48 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['schedule_appointment']
       </div>
     </div>
   </div>
+
+  <!-- Modal for Logout confirmation -->
+  <div id="logoutConfirmModal" class="modal" style="display:none; position: fixed; z-index: 1050; top: 0; left: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.5);">
+    <div class="modal-content" style="background-color: white; margin: 10% auto; padding: 20px; border-radius: 8px; box-shadow: 0 5px 15px rgba(0,0,0,0.3); max-width: 400px; text-align: center;">
+      <p style="font-size: 18px; margin-bottom: 20px;">Are you sure you want to log out?</p>
+      <div style="display: flex; justify-content: center; gap: 15px;">
+        <button id="logoutYesBtn" class="btn btn-danger" style="min-width: 80px;">Yes</button>
+        <button id="logoutNoBtn" class="btn btn-primary" style="min-width: 80px;">No</button>
+      </div>
+    </div>
+  </div>
+  
+  <script>
+    // Logout modal handling
+    const logoutBtn = document.getElementById('logoutBtn');
+    const logoutConfirmModal = document.getElementById('logoutConfirmModal');
+    const logoutYesBtn = document.getElementById('logoutYesBtn');
+    const logoutNoBtn = document.getElementById('logoutNoBtn');
+
+    if (logoutBtn && logoutConfirmModal && logoutYesBtn && logoutNoBtn) {
+      logoutBtn.addEventListener('click', function(event) {
+        event.preventDefault();
+        logoutConfirmModal.style.display = 'block';
+      });
+
+      logoutYesBtn.addEventListener('click', function() {
+        window.location.href = 'logout.php';
+      });
+
+      logoutNoBtn.addEventListener('click', function() {
+        logoutConfirmModal.style.display = 'none';
+      });
+    }
+
+    // Close modal if clicked outside modal content
+    window.onclick = function(event) {
+      const logoutModal = document.getElementById('logoutConfirmModal');
+      if (event.target == logoutModal) {
+        logoutModal.style.display = 'none';
+      }
+    };
+  </script>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>

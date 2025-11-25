@@ -114,7 +114,7 @@ These Terms are governed by the laws of the Republic of the Philippines, unless 
 
 13. Contact Information
 For concerns, feedback, or support, you may contact the Diagnopet administrators at:
-diagnopet.support@gmail.com
+diagnopet9@gmail.com
 
 TEXT;
 $terms = str_replace('%LAST_UPDATED%', $lastUpdated, $terms);
