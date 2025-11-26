@@ -1,142 +1,109 @@
 <?php
 session_start();
 include 'db_connect.php';
-// pet_dashboard.php - Single-file PHP dashboard demo
-// Place this file in your XAMPP htdocs (or equivalent) and open in the browser.
 
-// Start session and set random user if not set
-if (!isset($_SESSION['user_name'])) {
-    $_SESSION['user_name'] = 'User' . str_pad(rand(1, 999), 3, '0', STR_PAD_LEFT);
+// Ensure only logged-in petowners can access
+if (!isset($_SESSION['petowner_logged_in']) || $_SESSION['petowner_logged_in'] !== true) {
+    header("Location: guest_dashboard.php");
+    exit();
 }
+
 $user_name = $_SESSION['user_name'];
 
-// Handle delete pet
-if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['delete_pet_id'])) {
-    $delete_id = $_POST['delete_pet_id'];
-    $user = $_SESSION['user_name'];
-    $sql = "DELETE FROM pets WHERE pet_id = ? AND user_name = ?";
-    $stmt = $conn->prepare($sql);
-    $stmt->bind_param("is", $delete_id, $user);
-    $stmt->execute();
-    header("Location: petowner_dashboard.php");
-    exit();
-}
-
-// Handle delete symptom
-if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['delete_symptom_id'])) {
-    $delete_id = $_POST['delete_symptom_id'];
-    $user = $_SESSION['user_name'];
-    $sql = "DELETE s FROM symptoms s JOIN pets p ON s.pet_id = p.pet_id WHERE s.id = ? AND p.user_name = ?";
-    $stmt = $conn->prepare($sql);
-    $stmt->bind_param("is", $delete_id, $user);
-    $stmt->execute();
-    header("Location: petowner_dashboard.php");
-    exit();
-}
-
-// Fetch all pets for the user
+// -----------------------------
+// Fetch pets
+// -----------------------------
 $pets = [];
-if (isset($_SESSION['user_name'])) {
-    $user = $_SESSION['user_name'];
-    $sql = "SELECT `Pet Name`, `Pet Breed`, `Pet Age`, `Pet Weight`, pet_id, avatar FROM pets WHERE user_name = ?";
-    $stmt = $conn->prepare($sql);
-    $stmt->bind_param("s", $user);
-    $stmt->execute();
-    $result = $stmt->get_result();
-    while ($row = $result->fetch_assoc()) {
-        $pets[] = [
-            'name' => $row['Pet Name'],
-            'breed' => $row['Pet Breed'],
-            'age' => $row['Pet Age'],
-            'weight' => $row['Pet Weight'],
-            'id' => $row['pet_id'],
-            'avatar' => $row['avatar']
-        ];
+$stmt = $conn->prepare("SELECT pet_id, `Pet Name`, `Pet Breed`, `Pet Age`, `Pet Weight`, avatar FROM pets WHERE user_name=?");
+$stmt->bind_param("s", $user_name);
+$stmt->execute();
+$result = $stmt->get_result();
+while ($row = $result->fetch_assoc()) {
+    $pets[$row['pet_id']] = [
+        'id' => $row['pet_id'],
+        'name' => $row['Pet Name'],
+        'breed' => $row['Pet Breed'],
+        'age' => $row['Pet Age'],
+        'weight' => $row['Pet Weight'],
+        'avatar' => $row['avatar']
+    ];
+}
+
+// -----------------------------
+// Define breed arrays
+// -----------------------------
+$dog_breeds = ["Aspin / Askal","Labrador Retriever","Golden Retriever","Shih Tzu","Pomeranian","Poodle","Chihuahua","Pug","Siberian Husky","German Shepherd","Beagle","Dachshund","French Bulldog","Maltese","Boxer","Rottweiler","Cocker Spaniel","Yorkshire Terrier","Shiba Inu","Border Collie","Australian Shepherd","Jack Russell Terrier","Doberman Pinscher","Great Dane","Corgi","Miniature Pinscher","Bichon Frise","Bull Terrier","Cavalier King Charles Spaniel","Belgian Malinois","Chow Chow","Alaskan Malamute","Basenji","Cane Corso","English Springer Spaniel","Irish Setter","Havanese","Shar Pei","Lhasa Apso","American Bully","Pit Bull Terrier","Bullmastiff","Samoyed","Tibetan Terrier","American Eskimo Dog","Old English Sheepdog","Dalmatian","Whippet","Greyhound","Akita"];
+$cat_breeds = ["Puspin","Domestic Shorthair","Persian","Siamese","Maine Coon","Ragdoll","Bengal","British Shorthair","Scottish Fold","Sphynx","Norwegian Forest","Russian Blue","Exotic Shorthair","Burmese","Himalayan","Abyssinian","Oriental Shorthair","Turkish Angora","Tonkinese","Birman","Savannah","Cornish Rex","Devon Rex","Egyptian Mau","Manx","Ragamuffin","Chartreux","Balinese","Japanese Bobtail","American Shorthair","Australian Mist","LaPerm","Singapura","Selkirk Rex","Siberian","Ocicat","Serengeti","Pixiebob","Khao Manee","Korat","Lykoi","Peterbald","Chausie","Turkish Van","American Bobtail","Brazilian Shorthair","California Spangled","Oriental Longhair","Cymric","Burmilla"];
+
+// -----------------------------
+// Determine pet type
+// -----------------------------
+foreach ($pets as $id => $pet) {
+    if (in_array($pet['breed'], $dog_breeds)) {
+        $pets[$id]['type'] = 'Dog';
+    } elseif (in_array($pet['breed'], $cat_breeds)) {
+        $pets[$id]['type'] = 'Cat';
+    } else {
+        $pets[$id]['type'] = 'Unknown';
     }
 }
 
-// Fetch symptoms for the user grouped by pet
+// -----------------------------
+// Fetch symptoms per pet
+// -----------------------------
 $symptoms_by_pet = [];
 $symptoms = [];
-if (isset($_SESSION['user_name'])) {
-    $user = $_SESSION['user_name'];
-    $sql = "SELECT s.id, s.symptom, s.date_added, p.`Pet Name` as pet_name, p.pet_id FROM symptoms s JOIN pets p ON s.pet_id = p.pet_id WHERE p.user_name = ? ORDER BY p.`Pet Name`, s.date_added DESC";
-    $stmt = $conn->prepare($sql);
-    $stmt->bind_param("s", $user);
+foreach ($pets as $pet_id => $pet) {
+    $stmt = $conn->prepare("SELECT id, symptom, date_added FROM symptoms WHERE pet_id=? ORDER BY date_added DESC");
+    $stmt->bind_param("i", $pet_id);
     $stmt->execute();
-    $result = $stmt->get_result();
-    while ($row = $result->fetch_assoc()) {
-        $pet_id = $row['pet_id'];
-        if (!isset($symptoms_by_pet[$pet_id])) {
-            $symptoms_by_pet[$pet_id] = [
-                'pet_name' => $row['pet_name'],
-                'symptoms' => []
-            ];
-        }
-        $symptoms_by_pet[$pet_id]['symptoms'][] = [
-            'id' => $row['id'],
-            'symptom' => $row['symptom'],
-            'date_added' => $row['date_added']
-        ];
-        $symptoms[] = [
-            'id' => $row['id'],
-            'symptom' => $row['symptom'],
-            'date_added' => $row['date_added'],
-            'pet_name' => $row['pet_name']
-        ];
+    $res = $stmt->get_result();
+    $symptoms_list = [];
+    while ($row = $res->fetch_assoc()) {
+        $symptoms_list[] = $row;
+        $symptoms[] = array_merge($row, ['pet_name' => $pet['name']]);
     }
+    $symptoms_by_pet[$pet_id] = [
+        'pet_name' => $pet['name'],
+        'symptoms' => $symptoms_list
+    ];
 }
 
-// Pagination for symptoms
-$page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
-$per_page = 5;
-$total_symptoms = count($symptoms);
-$total_pages = ceil($total_symptoms / $per_page);
-$offset = ($page - 1) * $per_page;
-$paginated_symptoms = array_slice($symptoms, $offset, $per_page);
+// -----------------------------
+// Fetch documents per pet
+// -----------------------------
+$docs_by_pet = [];
+foreach ($pets as $pet_id => $pet) {
+    $stmt = $conn->prepare("SELECT id, name, file_path, date FROM documents WHERE pet_id=? ORDER BY date DESC");
+    $stmt->bind_param("i", $pet_id);
+    $stmt->execute();
+    $res = $stmt->get_result();
+    $docs_by_pet[$pet_id] = $res->fetch_all(MYSQLI_ASSOC);
+}
 
-$docs = [];
-
-$appointment = [
-    'date' => '',
-    'time' => '',
-    'vet'  => '',
-    'place'=> ''
-];
-
+// -----------------------------
+// Fetch medications
+// -----------------------------
 $meds = [];
+$stmt = $conn->prepare("SELECT id, name, note FROM medications WHERE user_name=? ORDER BY id DESC");
+$stmt->bind_param("s", $user_name);
+$stmt->execute();
+$res = $stmt->get_result();
+$meds = $res->fetch_all(MYSQLI_ASSOC);
 
-$events = [];
-
-// Load dog and cat breeds
-$dog_breeds = [];
-$cat_breeds = [];
-$breed_file = 'dog breeds and cat breeds.txt';
-if (file_exists($breed_file)) {
-    $content = file_get_contents($breed_file);
-    $lines = explode("\n", $content);
-    $current_section = '';
-    foreach ($lines as $line) {
-        $line = trim($line);
-        if (strpos($line, 'dogs:') === 0) {
-            $current_section = 'dogs';
-        } elseif (strpos($line, 'cats:') === 0) {
-            $current_section = 'cats';
-        } elseif (!empty($line) && $current_section == 'dogs') {
-            $breeds = explode(',', $line);
-            foreach ($breeds as $breed) {
-                $dog_breeds[] = trim($breed, '"');
-            }
-        } elseif (!empty($line) && $current_section == 'cats') {
-            $breeds = explode(',', $line);
-            foreach ($breeds as $breed) {
-                $cat_breeds[] = trim($breed, '"');
-            }
-        }
-    }
+// -----------------------------
+// Fetch upcoming appointment
+// -----------------------------
+$appointment = [];
+$stmt = $conn->prepare("SELECT date, time, vet, place FROM appointments WHERE user_name=? ORDER BY date ASC LIMIT 1");
+$stmt->bind_param("s", $user_name);
+$stmt->execute();
+$res = $stmt->get_result();
+if ($row = $res->fetch_assoc()) {
+    $appointment = $row;
 }
-
 ?>
+
 
 <!doctype html>
 <html lang="en">
@@ -168,6 +135,7 @@ if (file_exists($breed_file)) {
     .avatar{display:flex;gap:10px;align-items:center}
     .avatar img{width:36px;height:36px;border-radius:50%}
     .btn-add{background:var(--accent); color:#fff;padding:10px 14px;border-radius:12px;border:none;cursor:pointer;box-shadow:0 8px 20px rgba(92,79,255,0.18)}
+    .btn-logout{background:#ff4d4d; color:#fff;padding:10px 14px;border-radius:12px;border:none;cursor:pointer;box-shadow:0 8px 20px rgba(255,77,77,0.18)}
 
     /* content grid */
     .grid{display:grid;grid-template-columns:repeat(12,1fr);gap:16px}
@@ -292,6 +260,38 @@ if (file_exists($breed_file)) {
       border-radius: 4px;
       cursor: pointer;
     }
+
+  .event-card {
+  padding: 14px 16px;
+  border-radius: 12px;
+  background: #ffffff; /* White box */
+  box-shadow: 0 6px 18px rgba(36,41,90,0.08); /* subtle shadow */
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  cursor: pointer;
+}
+.event-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 24px rgba(36,41,90,0.12);
+}
+.event-date {
+  font-size: 12px;
+  font-weight: 600;
+  color: #5c4fff; /* accent color for date */
+}
+.event-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #222; /* black for title */
+}
+.event-time,
+.event-vet {
+  font-size: 12px;
+  color: #6b6f88;
+}
+
   </style>
 </head>
 <body>
@@ -303,7 +303,6 @@ if (file_exists($breed_file)) {
         <button title="Vets" onclick="navigate('Vets')">🏥</button>
         <button title="Profile" onclick="navigate('Profile')">👤</button>
         <button title="Settings" onclick="navigate('Settings')">⚙️</button>
-        <button title="Support" onclick="navigate('Support')">💬</button>
       </nav>
       <div class="logout" onclick="goBack()">←</div>
     </aside>
@@ -316,6 +315,7 @@ if (file_exists($breed_file)) {
         </div>
         <div style="display:flex;gap:12px;align-items:center">
           <button class="btn-add" onclick="window.location.href='pet-adding.php'">Add Pet</button>
+          <button class="btn-logout" onclick="window.location.href='logoutpet.php'">Logout</button>
           <div class="avatar"><div style="font-size:14px"><?php echo htmlspecialchars($user_name); ?></div></div>
         </div>
       </div>
@@ -340,15 +340,22 @@ if (file_exists($breed_file)) {
                     <img src="<?php echo htmlspecialchars($pet['avatar']); ?>" alt="Pet Avatar" style="width:100%;height:100%;object-fit:cover;border-radius:14px;">
                   <?php else: ?>
                     <?php
-                    $breed = $pet['breed'];
-                    if (in_array($breed, $dog_breeds)) {
-                        echo '<img src="DC icons/dog_12353611.png" alt="Dog Icon" style="width:100%;height:100%;object-fit:cover;border-radius:14px;">';
-                    } elseif (in_array($breed, $cat_breeds)) {
-                        echo '<img src="DC icons/tiger_414697.png" alt="Cat Icon" style="width:100%;height:100%;object-fit:cover;border-radius:14px;">';
-                    } else {
-                        echo htmlspecialchars(substr($pet['name'], 0, 1));
-                    }
-                    ?>
+// Determine pet type by breed
+$breedArray = [];
+$pet_breed = $pet['breed']; // fetch from DB
+
+if (in_array($pet_breed, $dog_breeds)) {
+    $breedArray = $dog_breeds;
+    $pet_type = 'Dog';
+} elseif (in_array($pet_breed, $cat_breeds)) {
+    $breedArray = $cat_breeds;
+    $pet_type = 'Cat';
+} else {
+    $pet_type = 'Unknown';
+    $pet_breed = 'Unknown Breed';
+}
+?>
+
                   <?php endif; ?>
                 </div>
                 <div class="pet-meta">
@@ -388,7 +395,7 @@ if (file_exists($breed_file)) {
         </div>
 
         <!-- middle column -->
-        <div class="card col-span-5">
+        <div class="card col-span-4">
           <h3 style="margin:0 0 12px 0">Symptoms</h3>
           <?php if (empty($symptoms_by_pet)): ?>
             <div style="display:flex;align-items:center;justify-content:center;color:#8b8fb1;font-size:14px;padding:20px;">
@@ -452,7 +459,7 @@ if (file_exists($breed_file)) {
         </div>
 
         <!-- right column -->
-        <div class="card col-span-3">
+        <!--<div class="card col-span-3">
           <h3 style="margin:0 0 8px 0">Appointment</h3>
           <?php if (empty($appointment['date'])): ?>
             <div class="small" style="color:#8b8fb1">No upcoming appointment. Schedule one with your vet!</div>
@@ -460,21 +467,37 @@ if (file_exists($breed_file)) {
             <div class="small">Date: <?php echo htmlspecialchars($appointment['date']); ?> | <?php echo htmlspecialchars($appointment['time']); ?></div>
             <div class="small">Vet: <?php echo htmlspecialchars($appointment['vet']); ?></div>
             <div class="small">Place: <?php echo htmlspecialchars($appointment['place']); ?></div>
-          <?php endif; ?>
+          <?php endif; ?> -->
 
           <hr style="margin:12px 0;border:none;border-top:1px solid #f1f3fb">
 
-          <h4 style="margin:0 0 8px 0">Coming events</h4>
-          <?php if (empty($events)): ?>
-            <div class="small" style="color:#8b8fb1;padding:8px 0">No events scheduled. Add reminders for vaccinations or grooming!</div>
-          <?php else: ?>
-            <?php foreach($events as $e): ?>
-              <div class="event">
-                <div style="font-weight:600"><?php echo htmlspecialchars($e['title']); ?></div>
-                <div class="small"><?php echo htmlspecialchars($e['date']); ?></div>
-              </div>
-            <?php endforeach; ?>
+<div class="card col-span-3">
+  <h4 style="margin:0 0 12px 0; color:#000000">Coming Events</h4>
+  
+  <?php if (empty($events)): ?>
+    <div class="small" style="color:#8b8fb1;padding:12px 0; text-align:center;">
+      No upcoming events. Add reminders for vaccinations, appointments, or grooming!
+    </div>
+  <?php else: ?>
+    <div style="display:flex;flex-direction:column;gap:12px;">
+      <?php foreach($events as $e): ?>
+        <div class="event-card">
+          <div class="event-date"><?php echo htmlspecialchars(date('M d, Y', strtotime($e['date']))); ?></div>
+          <div class="event-title"><?php echo htmlspecialchars($e['title']); ?></div>
+          <?php if(!empty($e['time'])): ?>
+            <div class="event-time"><?php echo htmlspecialchars($e['time']); ?></div>
           <?php endif; ?>
+          <?php if(!empty($e['vet'])): ?>
+            <div class="event-vet">Vet: <?php echo htmlspecialchars($e['vet']); ?></div>
+          <?php endif; ?>
+        </div>
+      <?php endforeach; ?>
+    </div>
+  <?php endif; ?>
+</div>
+
+
+
 
         </div>
       </section>
@@ -497,24 +520,24 @@ if (file_exists($breed_file)) {
   <script>
     // Button functionalities
     function navigate(section) {
-      switch(section) {
-        case 'Pets':
-          // Already on pets dashboard
-          break;
-        case 'Vets':
-          window.location.href = 'vets.php';
-          break;
-        case 'Profile':
-          alert('Profile section - Functionality to be implemented.');
-          break;
-        case 'Settings':
-          alert('Settings section - Functionality to be implemented.');
-          break;
-        case 'Support':
-          alert('Support section - Functionality to be implemented.');
-          break;
-      }
-    }
+  switch(section) {
+    case 'Pets':
+      break;
+    case 'Vets':
+      window.location.href = 'vets.php';
+      break;
+    case 'Profile':
+      window.location.href = 'profilepets.php';
+      break;
+    case 'Settings':
+      window.location.href = 'help_support.php';
+      break;
+    case 'Support':
+      alert('Support section - Functionality to be implemented.');
+      break;
+  }
+}
+
 
     function goBack() {
       window.location.href = 'role-select.php';
@@ -547,6 +570,7 @@ if (file_exists($breed_file)) {
       // Add active class to the clicked button
       event.target.classList.add('active');
     }
+
   </script>
 </body>
 </html>

@@ -1,29 +1,9 @@
-// =========================
-// Diagnopet API Integration
-// =========================
+// api.js - communicates with your backend
+const API_BASE_URL = "http://localhost:3000/api"; // backend URL
 
-// 🔹 Example placeholder API configuration
-const API_BASE_URL = "https://your-api-endpoint.com"; // Replace when available
-
-// Save pet data (example)
-async function savePetData(data) {
+export async function sendSymptoms(symptoms) {
   try {
-    const res = await fetch(${API_BASE_URL}/pets, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(data),
-    });
-    return await res.json();
-  } catch (err) {
-    console.error("Failed to save pet data:", err);
-    throw err;
-  }
-}
-
-// Send symptoms to your backend for diagnosis or vet matching
-async function sendSymptoms(symptoms) {
-  try {
-    const res = await fetch(${API_BASE_URL}/symptoms, {
+    const res = await fetch(`${API_BASE_URL}/symptoms`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ symptoms }),
@@ -35,10 +15,9 @@ async function sendSymptoms(symptoms) {
   }
 }
 
-// Fetch nearby vets (future geolocation integration)
-async function getNearbyVets(location) {
+export async function getNearbyVets(location) {
   try {
-    const res = await fetch(${API_BASE_URL}/vets?location=${encodeURIComponent(location)});
+    const res = await fetch(`${API_BASE_URL}/vets?location=${encodeURIComponent(location)}`);
     return await res.json();
   } catch (err) {
     console.error("Error fetching vets:", err);

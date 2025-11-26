@@ -150,7 +150,7 @@
       if (role === 'vet') {
         window.location.href = 'vetlanding.php';
       } else {
-        window.location.href = 'petowner_dashboard.php';
+        window.location.href = 'petowner_guest_dashboard.php';
       }
     }
 
